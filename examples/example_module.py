@@ -1,18 +1,20 @@
 import yeti
+import asyncio
 
 
-class Example(yeti.Module):
+class Example(yeti.AsyncioModule):
 
     def module_init(self):
-        self.add_task(self.say_hi("Hello world!"),  yeti.EventCondition("tick"))
-        self.add_task(self.say_hi("Good-bye world!"), yeti.FallingEventCondition("tick"))
+        self.add_task(self.say_hi("Hello world!"))
 
+    @asyncio.coroutine
     def say_hi(self, message):
-        i = 5
-        while i > .5:
-            print(message + " i=" + str(i))
-            i -= .5
-            yield 1, yeti.EventCondition("tick")
+        event = yeti.get_event("tick")
+        print("tick")
+        yield from event.wait()
+        while True:
+            print(message)
+            yield from asyncio.sleep(1)
 
 
 def get_module():

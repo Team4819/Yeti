@@ -1,5 +1,5 @@
 import yeti
-
+import asyncio
 
 class Example(yeti.Module):
 
@@ -14,7 +14,7 @@ class Example(yeti.Module):
             i -= .5
             if i < 4:
                 raise Exception("Oops, this is a CRITICAL Error!")
-            yield 1, yeti.EventCondition("tick")
+            yield from asyncio.sleep(1)
 
 
 def get_module():
