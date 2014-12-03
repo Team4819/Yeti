@@ -1,21 +1,20 @@
 import wpilib
 import yeti
-import asyncio
-from examples import example_module
+from examples import example_module_fail
 
-asyncio.set_event_loop_policy(yeti.FPGATimedEventLoopPolicy())
+
+context = yeti.Context()
+context.start()
+context.add_module(example_module_fail.Example())
 
 class George(wpilib.IterativeRobot):
 
     def robotInit(self):
-        module1 = example_module.Example()
-        module1.start()
-        wpilib.Timer.delay(5)
-        yeti.trigger_event("tick")
-        wpilib.Timer.delay(5)
-        module1.stop()
-        #module2 = Example()
-        #module2.start()
+        context = yeti.Context()
+        context.start()
+        context.add_module(example_module_fail.Example())
 
-if __name__ == "__main__":
-    wpilib.run(George)
+
+
+#if __name__ == "__main__":
+#    wpilib.run(George)

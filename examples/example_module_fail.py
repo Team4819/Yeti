@@ -4,17 +4,12 @@ import asyncio
 class Example(yeti.Module):
 
     def module_init(self):
-        self.add_task(self.say_hi("Hello world 1!"),  yeti.EventCondition("tick"))
-        self.add_task(self.say_hi("Good-bye world 1!"), yeti.FallingEventCondition("tick"))
+        self.add_task(self.say_hi())
 
-    def say_hi(self, message):
-        i = 5
-        while i > .5:
-            print(message + "i=" + str(i))
-            i -= .5
-            if i < 4:
-                raise Exception("Oops, this is a CRITICAL Error!")
-            yield from asyncio.sleep(1)
+    @asyncio.coroutine
+    def say_hi(self):
+        print("Hi")
+        raise ValueError("Oops, this is a CRITICAL Error!")
 
 
 def get_module():
