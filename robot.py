@@ -1,20 +1,22 @@
 import wpilib
 import yeti
-from examples import example_module_fail
-
-
-context = yeti.Context()
-context.start()
-context.add_module(example_module_fail.Example())
+from os.path import join
 
 class George(wpilib.IterativeRobot):
 
     def robotInit(self):
         context = yeti.Context()
         context.start()
-        context.add_module(example_module_fail.Example())
+        config_manager = yeti.ConfigManager()
+        config_manager.parse_config_file(join("examples", "mods.conf"))
+        config_manager.load_startup_mods(context)
+        wpilib.Timer.delay(3)
+        yeti.trigger_event_threadsafe("tick", context)
+        #module_loader = yeti.ModuleLoader()
+        #module_loader.set_context(context)
+        #module_loader.load("examples.example_module_fail")
 
 
 
-#if __name__ == "__main__":
-#    wpilib.run(George)
+if __name__ == "__main__":
+    wpilib.run(George)

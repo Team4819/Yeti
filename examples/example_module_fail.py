@@ -9,8 +9,5 @@ class Example(yeti.Module):
     @asyncio.coroutine
     def say_hi(self):
         print("Hi")
-        raise ValueError("Oops, this is a CRITICAL Error!")
+        raise Exception("Oops, this is a CRITICAL Error!")
 
-
-def get_module():
-    return Example

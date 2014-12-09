@@ -31,7 +31,14 @@ class Module(object):
         if self.context is None:
             raise ValueError("No currently bound context")
         task = asyncio.async(function)
+        task.add_done_callback(self.handle_result)
         self.tasks.append(task)
 
-    def is_own_task(self, handle):
-        return handle in self.tasks
+    def base_exception_handler(self, future):
+        return future.result()
+
+    exception_handler = base_exception_handler
+
+    def handle_result(self, fut):
+        if fut.exception():
+            self.exception_handler(fut)

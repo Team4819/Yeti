@@ -2,6 +2,8 @@ import logging
 import os
 import imp
 import traceback
+import inspect
+import asyncio
 
 class ModuleLoadError(Exception):
     """This error is for errors during module load"""
@@ -37,25 +39,38 @@ class ModuleLoader(object):
         self.module_import = None
         """The imported module file"""
 
-    def replace_faulty(self):
-        """Replace a faulty module with the next in line, aka increment fallback_index and trigger load()"""
-        self.fallback_index += 1
-        self.load()
+        self.module_context = None
+        """The context use for the module."""
+
+    def set_context(self, context):
+        self.module_context = context
+
+    def get_context(self):
+        if self.module_context is None:
+            raise ValueError("No context set.")
+        return self.module_context
+
+    def get_module(self):
+        return self.module_object
+
+    @asyncio.coroutine
+    def reload_coroutine(self):
+        yield from self.load()
 
     def reload(self):
-        self.load()
+        self.get_context().thread_coroutine(self.reload_coroutine())
 
     def add_fallback(self, fallback):
         self.fallback_list.append(fallback)
 
-    def load(self, module_path=None):
+    @asyncio.coroutine
+    def load_coroutine(self, module_path=None):
         """
         Load a module into the wrapper, either from a name, or use the existing fallback_list and fallback_index
         """
 
         #Start by unloading any previously loaded module
-        if self.module_object is None:
-            self.unload()
+        yield from self.unload_coroutine()
 
         #Setup module fallback lists
 
@@ -91,12 +106,25 @@ class ModuleLoader(object):
                     #Load the python file from scratch
                     self.module_import = __import__(file_to_load, fromlist=[''])
 
+                #Get the module class
+                module_class = None
+                for name, obj in inspect.getmembers(self.module_import):
+                    if inspect.isclass(obj):
+                        module_class = obj
+                        break
+
                 #Initialize the actual module object
-                self.module_object = self.module_import.get_module()()
+                self.module_object = module_class()
 
                 #Get the module's name and file name
                 self.module_name = self.module_object.name
                 self.module_path = file_to_load
+
+                #Setup exception handler
+                self.module_object.exception_handler = self.exception_handler
+
+                #Add module to the current context:
+                yield from self.module_context.add_module_coroutine(self.module_object)
 
                 #Yay, we must have been successful!
                 break
@@ -106,31 +134,39 @@ class ModuleLoader(object):
                 logging.error("Error loading module: " + file_to_load + ": " + str(e) + "\n" + traceback.format_exc())
                 self.fallback_index += 1
 
-    def start(self):
-        self.module_object._run_target = self.run
-        self.module_object.start()
+    def load(self, module_path=None):
+        self.get_context().thread_coroutine(self.load_coroutine(module_path))
 
-    def run(self):
-        while True:
-            try:
-                self.module_object._run_loop()
-                break
-
-            except Exception as e:
-                #Oops, something happened.
-                logging.error("Error in module run: " + self.module_path + ": " + str(e) + "\n" + traceback.format_exc())
-
-                #Try to load a replacement module.
-                self.replace_faulty()
+    @asyncio.coroutine
+    def unload_coroutine(self):
+        """Unload the currently loaded module"""
+        if self.module_object is not None:
+            yield from self.module_context.unload_module_coroutine(self.module_name)
+            self.module_object = None
+            logging.info("unloaded module " + self.module_path)
 
     def unload(self):
         """Unload the currently loaded module"""
-        self.module_object = None
-        logging.info("unloaded module " + self.module_name)
+        self.get_context().thread_coroutine(self.unload_coroutine())
 
-    def __getattr__(self, item):
-        #Prevent a feedback loop
-        if item == "module_object":
-            raise AttributeError(item)
-        #Get that attribute!
-        return getattr(self.module_object, item)
+    def exception_handler(self, future):
+        #Oops, something happened
+        logging.error("Error in module run: " + self.module_path + ": " + str(future.exception()))
+
+        #Try to load a replacement module.
+        self.replace_faulty()
+
+    @asyncio.coroutine
+    def replace_faulty_coroutine(self):
+        """Replace a faulty module with the next in line, aka increment fallback_index and trigger load()"""
+        self.fallback_index += 1
+        try:
+            yield from self.load_coroutine()
+        except Exception as e:
+            logging.error("Error replacing faulty module: " + str(e))
+
+    def replace_faulty(self):
+        """Replace a faulty module with the next in line, aka increment fallback_index and trigger load()"""
+        if self.module_context is None:
+            raise ValueError("No context set.")
+        self.module_context.thread_coroutine(self.replace_faulty_coroutine())

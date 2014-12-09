@@ -11,18 +11,15 @@ class ConfigManager(object):
     STARTUP_MOD_SECTION = "StartupMods"
 
     def __init__(self):
-        self.loaded_startup_modules = list()
         self.config_structure = None
 
-    def load_startup_mods(self):
+    def load_startup_mods(self, context):
         if self.config_structure is None:
             raise ConfigurationError("No config file loaded.")
         for module_name in self.config_structure[self.STARTUP_MOD_SECTION]:
-            module_loader = self.load_module(module_name)
-            module_loader.start()
-            self.loaded_startup_modules.append(module_loader)
+            self.load_module(module_name, context)
 
-    def load_module(self, name):
+    def load_module(self, name, context):
 
         if self.config_structure is None:
             fallback_list = [name]
@@ -45,9 +42,9 @@ class ConfigManager(object):
                 fallback_list = [name]
 
         module_loader = ModuleLoader()
+        module_loader.set_context(context)
         module_loader.fallback_list = fallback_list
         module_loader.load()
-        return module_loader
 
     def parse_config_file(self, path):
         """Parse the module config file, returns a dictionary of all config file entries"""
