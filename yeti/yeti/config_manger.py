@@ -2,6 +2,8 @@ import logging
 
 from .module_loader import ModuleLoader
 
+logger = logging.getLogger('yeti')
+
 
 class ConfigurationError(Exception):
     pass
@@ -13,6 +15,7 @@ class ConfigManager(object):
 
     def __init__(self):
         self.config_structure = None
+        self.module_loaders = dict()
 
     def load_startup_mods(self, context):
         if self.config_structure is None:
@@ -46,6 +49,7 @@ class ConfigManager(object):
         module_loader.set_context(context)
         module_loader.fallback_list = fallback_list
         module_loader.load()
+        self.module_loaders[name] = module_loader
 
     def parse_config_file(self, path):
         """Parse the module config file, returns a dictionary of all config file entries"""
@@ -77,6 +81,6 @@ class ConfigManager(object):
                     parsed_config[section].append(line)
 
         #Message the system
-        logging.info("Finished parsing " + path)
+        logger.info("Finished parsing " + path)
         self.config_structure = parsed_config
         return parsed_config

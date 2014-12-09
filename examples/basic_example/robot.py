@@ -8,7 +8,7 @@ class George(wpilib.IterativeRobot):
         context = yeti.Context()
         context.start()
         config_manager = yeti.ConfigManager()
-        config_manager.parse_config_file(join("examples", "mods.conf"))
+        config_manager.parse_config_file("mods.conf")
         config_manager.load_startup_mods(context)
         wpilib.Timer.delay(3)
         yeti.trigger_event_threadsafe("tick", context)

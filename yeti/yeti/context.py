@@ -18,7 +18,9 @@ class Context(object):
         self.datastore = dict()
         self.datastore_lock = threading.RLock()
         self.event_loop = asyncio.new_event_loop()
-        self.event_loop.set_debug(True)
+
+    def set_debug(self, debug):
+        self.event_loop.set_debug(debug)
 
     def thread_coroutine(self, co):
         self.event_loop.call_soon_threadsafe(asyncio.async, co)

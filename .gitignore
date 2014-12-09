@@ -57,3 +57,5 @@ target/
 *.iml
 .idea/*
 .pycharmproject
+
+version.py

@@ -5,6 +5,8 @@ import traceback
 import inspect
 import asyncio
 
+logger = logging.getLogger('yeti')
+
 class ModuleLoadError(Exception):
     """This error is for errors during module load"""
     def __init__(self, name, message):
@@ -94,7 +96,7 @@ class ModuleLoader(object):
             file_to_load = self.fallback_list[self.fallback_index]
             try:
 
-                logging.info("Loading " + file_to_load)
+                logger.info("Loading " + file_to_load)
 
                 if file_to_load == self.module_path:
                     #This is the same file we have already loaded! just wipe the cache, if necessary, and reload it!
@@ -131,7 +133,7 @@ class ModuleLoader(object):
 
             except Exception as e:
                 #Oops, something happened. We must try the next one on the fallback list!
-                logging.error("Error loading module: " + file_to_load + ": " + str(e) + "\n" + traceback.format_exc())
+                logger.error("Error loading module: " + file_to_load + ": " + str(e) + "\n" + traceback.format_exc())
                 self.fallback_index += 1
 
     def load(self, module_path=None):
@@ -143,7 +145,7 @@ class ModuleLoader(object):
         if self.module_object is not None:
             yield from self.module_context.unload_module_coroutine(self.module_name)
             self.module_object = None
-            logging.info("unloaded module " + self.module_path)
+            logger.info("unloaded module " + self.module_path)
 
     def unload(self):
         """Unload the currently loaded module"""
@@ -151,7 +153,7 @@ class ModuleLoader(object):
 
     def exception_handler(self, future):
         #Oops, something happened
-        logging.error("Error in module run: " + self.module_path + ": " + str(future.exception()))
+        logger.error("Error in module run: " + self.module_path + ": " + str(future.exception()))
 
         #Try to load a replacement module.
         self.replace_faulty()
@@ -163,7 +165,7 @@ class ModuleLoader(object):
         try:
             yield from self.load_coroutine()
         except Exception as e:
-            logging.error("Error replacing faulty module: " + str(e))
+            logger.error("Error replacing faulty module: " + str(e))
 
     def replace_faulty(self):
         """Replace a faulty module with the next in line, aka increment fallback_index and trigger load()"""
