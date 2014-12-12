@@ -10,7 +10,7 @@ context_datastore_key = "events"
 def get_event(eid, context=None):
     if context is None:
         context = get_context()
-    evdata, lock = context.get_data(context_datastore_key)
+    evdata, lock = context.get_interface_data(context_datastore_key)
     with lock:
         if eid not in evdata:
             evdata[eid] = Event(loop=context.get_event_loop())
@@ -26,7 +26,7 @@ def trigger_event_threadsafe(eid, context=None):
 def trigger_event(eid, context=None):
     if context is None:
         context = get_context()
-    evdata, lock = context.get_data(context_datastore_key)
+    evdata, lock = context.get_interface_data(context_datastore_key)
     with lock:
         if eid not in evdata:
             evdata[eid] = Event()
@@ -42,7 +42,7 @@ def reset_event_threadsafe(eid, context=None):
 def reset_event(eid, context=None):
     if context is None:
         context = get_context()
-    evdata, lock = context.get_data(context_datastore_key)
+    evdata, lock = context.get_interface_data(context_datastore_key)
     with lock:
         if eid not in evdata:
             evdata[eid] = Event()

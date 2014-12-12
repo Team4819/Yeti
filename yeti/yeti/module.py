@@ -1,25 +1,30 @@
 import asyncio
+import logging
+
 
 class Module(object):
     name = "module"
-    context = None
+    event_loop = None
 
     def __init__(self):
         self.name = self.__class__.__name__
+        self.logger = logging.getLogger('yeti.' + self.name)
         self.tasks = list()
 
-    def bind_context(self, context):
-        if self.context is not None:
-            raise ValueError("Module already bound to context, cannot bind to another.")
-        self.context = context
 
-    def _init(self):
+    def init(self, loop=None):
+        if loop is None:
+            self.event_loop = asyncio.get_event_loop()
+        else:
+            self.event_loop = loop
         self.module_init()
+        self.logger.info("Finished module init.")
 
-    def _deinit(self):
+    def deinit(self):
         for task in self.tasks:
             task.cancel()
         self.module_deinit()
+        self.logger.info("Finished module deinit.")
 
     def module_init(self):
         pass
@@ -28,8 +33,8 @@ class Module(object):
         pass
 
     def add_task(self, function):
-        if self.context is None:
-            raise ValueError("No currently bound context")
+        if self.event_loop is None:
+            raise ValueError("No event loop setup")
         task = asyncio.async(function)
         task.add_done_callback(self.handle_result)
         self.tasks.append(task)
