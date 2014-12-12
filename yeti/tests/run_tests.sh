@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-cd `dirname $0`
 
-PYTHONPATH=.. python3 -m coverage run --source yeti -m pytest $@
+PYTHONPATH=yeti python3 -m pytest --cov yeti
 python -m coverage report -m
