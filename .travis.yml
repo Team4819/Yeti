@@ -3,6 +3,7 @@ language: python
 install:
   - "pip install --pre -r requirements.txt"
   - "pip install python-coveralls"
+  - "pip install ./yeti"
 
 python:
   - "3.4"
