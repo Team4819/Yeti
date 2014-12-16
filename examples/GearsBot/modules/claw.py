@@ -19,17 +19,18 @@ class Claw(yeti.Module):
         self.state_datastream = yeti.get_datastream("claw_state")
         self.state_datastream.set(self.state_data)
 
+        self.elevator_motor = wpilib.Victor(5)
+
+        self.elevator_pot = wpilib.AnalogPotentiometer(2)    # defaults to meters
+
         #Get the PID controller
-        self.pid_controller = wpilib.PIDController(18, 0.2, 0, self.get_pid_in, self.set_pid_out)
+        self.pid_controller = wpilib.PIDController(18, 0.2, 0, self.elevator_pot, self.elevator_motor)
 
 
         # Let's show everything on the LiveWindow
         wpilib.LiveWindow.addActuator(self.name, "Claw Motor", self.claw_motor)
         wpilib.LiveWindow.addActuator(self.name, "Claw Limit Switch", self.claw_contact)
 
-        self.elevator_motor = wpilib.Victor(5)
-
-        self.elevator_pot = wpilib.AnalogPotentiometer(2)    # defaults to meters
 
         # Let's show everything on the LiveWindow
         wpilib.LiveWindow.addActuator(self.name, "Elevator Motor", self.elevator_motor)
@@ -48,26 +49,31 @@ class Claw(yeti.Module):
 
     @asyncio.coroutine
     def teleop_loop(self):
-        yield from yeti.get_event("teleoperated").wait()
-        elevator_tgt = self.joystick.getZ()
-        claw_tgt = self.state_data["claw_open"]
-        close_button = self.joystick.getButton(5)
-        open_button = self.joystick.getButton(3)
-        if close_button:
-            claw_tgt = False
-        elif open_button:
-            claw_tgt = True
-        control_data = {"claw_open": claw_tgt, "elevator_pos": elevator_tgt, "wrist_pos": 0}
-        self.control_datastream.set(control_data)
-        yield from asyncio.sleep(.03)
+        while True:
+            yield from yeti.get_event("teleoperated").wait()
+            elevator_tgt = self.joystick.getZ()
+            claw_tgt = self.state_data["claw_open"]
+            close_button = self.joystick.getRawButton(4)
+            open_button = self.joystick.getRawButton(2)
+            if close_button:
+                claw_tgt = False
+            elif open_button:
+                claw_tgt = True
+            control_data = {"claw_open": claw_tgt, "elevator_pos": elevator_tgt, "wrist_pos": 0}
+            self.control_datastream.set(control_data)
+            yield from asyncio.sleep(.03)
 
     @asyncio.coroutine
     def run_loop(self):
-        yield from yeti.get_event("enabled").wait()
-        control_data = self.control_datastream.get(self.control_data_default)
-        if control_data["claw_open"]:
-            self.claw_motor.set(-1)
-        else:
-            self.claw_motor.set(1)
-        self.pid_controller.setSetpoint(control_data["elevator_pos"])
-        yield from asyncio.sleep(.03)
+        while True:
+            yield from yeti.get_event("enabled").wait()
+            control_data = self.control_datastream.get(self.control_data_default)
+            if control_data["claw_open"]:
+                self.claw_motor.set(-1)
+            else:
+                self.claw_motor.set(1)
+            self.state_data["claw_open"] = control_data["claw_open"]
+            self.state_data["arm_pos"] = self.get_pid_in()
+            self.pid_controller.setSetpoint(control_data["elevator_pos"])
+            #self.pid_controller.calculate()
+            yield from asyncio.sleep(.03)

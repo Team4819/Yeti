@@ -2,5 +2,5 @@
 
 set -e
 
-PYTHONPATH=yeti python3 -m pytest --cov yeti
+PYTHONPATH=yeti python3 -m pytest --cov yeti/yeti
 python -m coverage report -m

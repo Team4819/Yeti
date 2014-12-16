@@ -12,6 +12,7 @@ class GearsBot(wpilib.IterativeRobot):
 
     def teleopInit(self):
         yeti.trigger_event_threadsafe("teleoperated", context=self.context)
+        print("Enabling!")
         yeti.trigger_event_threadsafe("enabled", context=self.context)
 
     def disabledInit(self):

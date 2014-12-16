@@ -42,6 +42,6 @@ setup(
     url='https://github.com/team4819/yeti',
     keywords='frc first robotics asyncio',
     packages=[base_package,
-              base_package + '.interfaces'],
+              base_package + '.module_interfaces'],
     )
 
