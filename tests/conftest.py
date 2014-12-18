@@ -1,5 +1,7 @@
-import pytest
 from os import path
+
+import pytest
+
 
 @pytest.fixture(scope="function")
 def yeti():

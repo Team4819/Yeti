@@ -1,5 +1,7 @@
-import yeti
 import asyncio
+
+import yeti
+
 
 class Example(yeti.Module):
 

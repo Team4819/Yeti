@@ -1,6 +1,6 @@
-import yeti
 import asyncio
-
+import yeti
+from yeti.module_interfaces import events
 
 class Example(yeti.Module):
 
@@ -10,7 +10,7 @@ class Example(yeti.Module):
 
     @asyncio.coroutine
     def tactfull_hello(self):
-        yield from yeti.get_event("tick").wait()
+        yield from events.get_event("tick").wait()
         print("... hi?")
 
     @asyncio.coroutine

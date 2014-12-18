@@ -1,7 +1,10 @@
-import yeti
 import asyncio
-import wpilib
 import math
+
+import wpilib
+
+import yeti
+
 
 class ArcadeDrive(yeti.Module):
 

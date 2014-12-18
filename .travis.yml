@@ -8,7 +8,7 @@ python:
   - "3.4"
 
 script:
-  - yeti/tests/run_tests.sh
+  - tests/run_tests.sh
 
 after_success:
   - coveralls

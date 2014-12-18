@@ -1,15 +1,20 @@
 import asyncio
 import logging
+from functools import partial
+
+from .hook_server import HookServer
 
 
-class Module(object):
+class Module(HookServer):
     name = "module"
     event_loop = None
 
     def __init__(self):
+        super().__init__()
         self.name = self.__class__.__name__
         self.logger = logging.getLogger('yeti.' + self.name)
         self.tasks = list()
+        self.add_hook("end_task", self.handle_result)
 
 
     def init(self, loop=None):
@@ -36,14 +41,12 @@ class Module(object):
         if self.event_loop is None:
             raise ValueError("No event loop setup")
         task = asyncio.async(function)
-        task.add_done_callback(self.handle_result)
+        task.add_done_callback(partial(self.call_hook, "end_task"))
+        self.call_hook("add_task", task)
         self.tasks.append(task)
 
-    def base_exception_handler(self, future):
-        return future.result()
-
-    exception_handler = base_exception_handler
 
     def handle_result(self, fut):
         if fut.exception():
-            self.exception_handler(fut)
+            if not self.call_hook("exception", fut.exception()):
+                return fut.result()
