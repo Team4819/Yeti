@@ -19,9 +19,9 @@ class Hook(object):
 
     def call(self, *args, **kwargs):
         """
-        Triggers all hooks registered with hook_server for hook_name
+        Calls the hook function
         """
-        self.hook_server.call_hook(*args, **kwargs)
+        self.func(*args, **kwargs)
 
     def unset(self):
         """
@@ -67,7 +67,7 @@ class HookServer(object):
         if hook_name in self._hooks:
             for hook in self._hooks[hook_name]:
                 try:
-                    hook(*args, **kwargs)
+                    hook.call(*args, **kwargs)
                     retval = True
                 except Exception as e:
                     self.logger.exception("Exception on hook call: {}".format(e))
