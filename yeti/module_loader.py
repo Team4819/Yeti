@@ -8,13 +8,13 @@ import asyncio
 logger = logging.getLogger('yeti.module_loader')
 
 class ModuleLoadError(Exception):
-    """This error is for errors during module load"""
+    """This error is raised for errors during module load"""
     def __init__(self, name, message):
         super().__init__(name + ": " + message)
 
 
 class ModuleUnloadError(Exception):
-    """This error is for errors during module unload"""
+    """This error is raised for errors during module unload"""
     def __init__(self, name, message):
         super().__init__(name + ": " + message)
 
@@ -27,40 +27,36 @@ class ModuleLoader(object):
     def __init__(self):
 
         self.fallback_list = list()
-        """The list of fallback modules to use on case of failure"""
-
         self.fallback_index = 0
-        """The current modules index on the fallback list"""
 
         self.module_path = ""
-        """The loaded modules filename"""
-
         self.module_name = ""
-        """The loaded modules subsystem name"""
-
         self.module_object = None
-        """The module object"""
-
         self.module_import = None
-        """The imported module file"""
-
         self.module_context = None
-        """The context use for the module."""
 
         self.logger = logger
 
     def set_context(self, context):
-        """Sets the context for the module loader to load modules into."""
+        """
+        Sets the context for the module loader to load modules into.
+
+        :param context: The context to use for the module
+        """
         self.module_context = context
 
     def get_context(self):
-        """Returns the context set for the module loader."""
+        """
+        :returns: The context currently set for the loader.
+        """
         if self.module_context is None:
             raise ValueError("No context set.")
         return self.module_context
 
     def get_module(self):
-        """Returns the currently loaded module object."""
+        """
+        :returns: The currently loaded module object.
+        """
         return self.module_object
 
     def reload(self):
@@ -73,17 +69,39 @@ class ModuleLoader(object):
     @asyncio.coroutine
     def reload_coroutine(self):
         """
-        This is shorthand for load_coroutine()
+        This unloads any existing module object and loads the next available module in the callback list.
         """
         yield from self.load_coroutine()
 
     def add_fallback(self, fallback):
+        """
+        Add a filename to the fallback list.
+
+        :param fallback: The filename to add to the fallback list.
+        """
         self.fallback_list.append(fallback)
+
+    def set_fallback(self, fallback_list):
+        """
+        Replaces the current fallback list with a copy of fallback_list.
+
+        :param fallback_list: The list of filenames to use for the fallback list.
+        """
+        self.fallback_list = fallback_list[:]
 
     @asyncio.coroutine
     def load_coroutine(self, module_path=None):
         """
-        Load a module into the wrapper, either from a name, or use the existing fallback_list and fallback_index
+        Loads a module into the loader, taking the filename from the top of the fallback_list.
+
+        Prior to module loading, it will unload any loaded module.
+
+        If given module_path, it will try to find it in the current fallback list. If it fails, it will create a new
+        fallback_list with module_path.
+
+        It then iterates through fallback_list, loading modules until one completes successfully.
+
+        :param module_path: The (optional) module filename to use.
         """
 
         #Start by unloading any previously loaded module
@@ -139,7 +157,7 @@ class ModuleLoader(object):
                 self.logger = self.module_object.logger
 
                 #Add control hooks
-                self.module_object.add_hook("exception", self.exception_handler)
+                self.module_object.add_hook("exception", self._exception_handler)
                 self.module_object.add_hook("reload", self.reload)
 
                 #Add module to the current context:
@@ -154,6 +172,7 @@ class ModuleLoader(object):
                 self.fallback_index += 1
 
     def load(self, module_path=None):
+        """Schedules :meth:`load_coroutine` to be run."""
         self.get_context().thread_coroutine(self.load_coroutine(module_path))
 
     @asyncio.coroutine
@@ -165,10 +184,10 @@ class ModuleLoader(object):
             self.logger.info("unloaded module " + self.module_path)
 
     def unload(self):
-        """Unload the currently loaded module"""
+        """Schedules :meth:`unload_coroutine` to be run."""
         self.get_context().thread_coroutine(self.unload_coroutine())
 
-    def exception_handler(self, exception):
+    def _exception_handler(self, exception):
         #Oops, something happened
         self.logger.error("Error in module run: {}: {}\n {}".format(self.module_path, str(exception), "".join(traceback.format_tb(exception.__traceback__))))
 
@@ -185,7 +204,5 @@ class ModuleLoader(object):
             self.logger.error("Error replacing faulty module: " + str(e))
 
     def replace_faulty(self):
-        """Replace a faulty module with the next in line, aka increment fallback_index and trigger load()"""
-        if self.module_context is None:
-            raise ValueError("No context set.")
-        self.module_context.thread_coroutine(self.replace_faulty_coroutine())
+        """Schedules :meth:`replace_faulty_coroutine` to be run."""
+        self.get_context().thread_coroutine(self.replace_faulty_coroutine())

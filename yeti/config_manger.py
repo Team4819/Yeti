@@ -2,7 +2,7 @@ import logging
 
 from .module_loader import ModuleLoader
 
-logger = logging.getLogger('yeti')
+logger = logging.getLogger('yeti.ConfigManager')
 
 
 class ConfigurationError(Exception):
@@ -10,21 +10,37 @@ class ConfigurationError(Exception):
 
 
 class ConfigManager(object):
+    """
+    Uses instances of :class:`ModuleLoader` to load modules from reference lists in a configuration file.
+    """
 
-    STARTUP_MOD_SECTION = "StartupMods"
+    _STARTUP_MOD_SECTION = "StartupMods"
 
     def __init__(self):
         self.config_structure = None
         self.module_loaders = dict()
 
     def load_startup_mods(self, context):
+        """
+        Find all modules in the "StartupMods" section of the config file, and load them with instances of :class:`ModuleLoader`
+        into the specified context.
+
+        :param context: The context to load the modules into.
+        """
         if self.config_structure is None:
             raise ConfigurationError("No config file loaded.")
-        for module_name in self.config_structure[self.STARTUP_MOD_SECTION]:
+        for module_name in self.config_structure[self._STARTUP_MOD_SECTION]:
             self.load_module(module_name, context)
 
     def load_module(self, name, context):
+        """
+        This uses a loaded config file to generate a fallback list and use a :class:`ModuleLoader` to load the module.
 
+        :param name: The name reference of the module to load.
+        :param context: The context to load the module into.
+
+        :returns: The created :class:`ModuleLoader`
+        """
         if self.config_structure is None:
             fallback_list = [name]
 
@@ -36,7 +52,7 @@ class ConfigManager(object):
         else:
             #Search for filename in loaded config
             for subsystem_config in self.config_structure:
-                if subsystem_config != self.STARTUP_MOD_SECTION and name in self.config_structure[subsystem_config]:
+                if subsystem_config != self._STARTUP_MOD_SECTION and name in self.config_structure[subsystem_config]:
                     #We found it! set the fallback list
                     fallback_list = self.config_structure[subsystem_config]
                     break
@@ -50,9 +66,16 @@ class ConfigManager(object):
         module_loader.fallback_list = fallback_list
         module_loader.load()
         self.module_loaders[name] = module_loader
+        return module_loader
 
     def parse_config_file(self, path):
-        """Parse the module config file, returns a dictionary of all config file entries"""
+        """
+        Parse the config file.
+
+        :param path: The file path of the config file to parse.
+
+        :returns: The dictionary of the parsed config file.
+        """
         #Open the file
         f = open(path)
         section = None

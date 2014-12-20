@@ -3,13 +3,14 @@ import logging
 
 class Hook(object):
     """
-    This provides an interface for a method used as a hook with a :class:HookServer
+    This stores a reference to a method, and can be used to remove the hook's reference from the source :class:HookServer
+    Hook objects are generally only created by a :class:`.HookServer`.
     """
 
     def __init__(self, hook_server, hook_name, func):
         """
-        :param hook_server: The instance of :class:HookServer that uses this hook.
-        :param hook_id: The
+        :param hook_server: The instance of :class:`.HookServer` that uses this hook.
+        :param hook_name: The name of the method to create a hook for.
         :param func: The function to use with the hook.
         """
         self.func = func
@@ -40,10 +41,12 @@ class HookServer(object):
 
     def add_hook(self, hook_name, callback):
         """
-        :param hook_name: The name of the function to create a hook for.
+        Adds a hooks to be run when method hook_name is called.
+
+        :param hook_name: The name of the method to create a hook for.
         :param callback: The method to use for the hook.
-        Adds callback to the list of hooks to be run when hook_name is called.
-        :returns The created instance of :class:Hook
+
+        :returns: The new instance of :class:`.Hook`
         """
         hook = Hook(self, hook_name, callback)
         if hook_name not in self._hooks:
@@ -53,10 +56,12 @@ class HookServer(object):
 
     def call_hook(self, hook_name, *args, **kwargs):
         """
-        :param hook_name: The name of hook to be called
-        Calls all hooks that have been added to this :class:HookServer under the name hook_name with all extra
+        Calls all hooks that have been added to this :class:`.HookServer` for the method hook_name with all extra
         provided parameters.
-        :returns If at least one hook was successfully called.
+
+        :param hook_name: The name of the method with hooks to be called.
+
+        :returns: True if at least one hook was successfully called.
         """
         retval = False
         if hook_name in self._hooks:
@@ -70,9 +75,11 @@ class HookServer(object):
 
     def remove_hook(self, hook):
         """
-        :param hook: The :class:Hook object to remove
-        :returns Weather or not removal was successful.
-        Removes hook from the instance of :class:HookServer
+        Removes hook from the instance of :class:`.HookServer`
+
+        :param hook: The :class:`.Hook` object to remove.
+
+        :returns: Weather or not removal was successful.
         """
         if hook in self._hooks[hook.hook_name]:
             self._hooks[hook.hook_name].remove(hook)
