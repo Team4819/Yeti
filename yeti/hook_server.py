@@ -19,7 +19,7 @@ class Hook(object):
 
     def call(self, *args, **kwargs):
         """
-        Calls the hook function
+        Calls the hook function with the given parameters
         """
         self.func(*args, **kwargs)
 

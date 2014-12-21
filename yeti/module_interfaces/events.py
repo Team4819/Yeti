@@ -33,13 +33,13 @@ def trigger_event(eid, context=None):
         evdata[eid].set()
 
 
-def reset_event_threadsafe(eid, context=None):
+def clear_event_threadsafe(eid, context=None):
     if context is None:
         context = get_context()
-    context.get_event_loop().call_soon_threadsafe(partial(reset_event, eid, context))
+    context.get_event_loop().call_soon_threadsafe(partial(clear_event, eid, context))
 
 
-def reset_event(eid, context=None):
+def clear_event(eid, context=None):
     if context is None:
         context = get_context()
     evdata, lock = context.get_interface_data(context_datastore_key)

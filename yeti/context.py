@@ -1,5 +1,6 @@
 import threading
 import asyncio
+import logging
 
 from .hook_server import HookServer
 
@@ -33,15 +34,25 @@ class Context(HookServer):
         self.interface_data = dict()
         self.interface_data_lock = threading.RLock()
         self._event_loop = asyncio.new_event_loop()
+        self.logger = logging.getLogger(name="yeti." + self.__class__.__name__)
 
-    def thread_coroutine(self, coroutine):
+    def thread_coroutine(self, coroutine, logger=None):
         """
         Schedules coroutine to be run in the context's event loop.
         This function is thread-safe.
 
         :param coroutine: The coroutine to schedule
         """
-        self._event_loop.call_soon_threadsafe(asyncio.async, coroutine)
+        if logger is None:
+            logger = self.logger
+        self._event_loop.call_soon_threadsafe(asyncio.async, self._error_net(coroutine, logger))
+
+    @asyncio.coroutine
+    def _error_net(self, coro, log):
+        try:
+            yield from coro
+        except Exception as e:
+            log.error(e)
 
     def get_event_loop(self):
         """
@@ -127,7 +138,7 @@ class Context(HookServer):
             raise ValueError("Already have a module with name {} in this context, cannot add another.")
         self.loaded_modules[module.name] = module
         module.start(loop=self._event_loop)
-        self.call_hook("module_load", self.loaded_modules[module])
+        self.call_hook("module_load", module)
 
     def unload_module(self, module_name):
         """

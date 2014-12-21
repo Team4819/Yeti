@@ -43,7 +43,10 @@ class ModuleLoader(object):
 
         :param context: The context to use for the module
         """
+        if self.module_context is None:
+            context.add_hook("reload", self.reload)
         self.module_context = context
+
 
     def get_context(self):
         """
@@ -161,7 +164,7 @@ class ModuleLoader(object):
                 self.module_object.add_hook("reload", self.reload)
 
                 #Add module to the current context:
-                yield from self.module_context.add_module_coroutine(self.module_object)
+                yield from self.module_context.load_module_coroutine(self.module_object)
 
                 #Yay, we must have been successful!
                 break
@@ -192,7 +195,10 @@ class ModuleLoader(object):
         self.logger.error("Error in module run: {}: {}\n {}".format(self.module_path, str(exception), "".join(traceback.format_tb(exception.__traceback__))))
 
         #Try to load a replacement module.
-        self.replace_faulty()
+        try:
+            self.replace_faulty()
+        except ModuleLoadError as e:
+            logger.error(e)
 
     @asyncio.coroutine
     def replace_faulty_coroutine(self):

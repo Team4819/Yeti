@@ -19,8 +19,8 @@ class GearsBot(wpilib.IterativeRobot):
         events.trigger_event_threadsafe("enabled", context=self.context)
 
     def disabledInit(self):
-        events.reset_event_threadsafe("teleoperated", context=self.context)
-        events.reset_event_threadsafe("enabled", context=self.context)
+        events.clear_event_threadsafe("teleoperated", context=self.context)
+        events.clear_event_threadsafe("enabled", context=self.context)
 
 if __name__ == "__main__":
     wpilib.run(GearsBot)

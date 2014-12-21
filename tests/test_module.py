@@ -1,28 +1,22 @@
 import asyncio
 
-
-def test_module_start(yeti, context):
-    class TestMod(yeti.Module):
-        pass
-    module = TestMod()
-    context.load_module(module)
-    context.run_for(.5)
-
-
-def test_module_run(yeti, context):
+def test_module_run(yeti):
     class SetterMod(yeti.Module):
         message = "..."
 
         def module_init(self):
             self.message = "Hi!"
+            self.event_loop.stop()
+
     module = SetterMod()
-    context.load_module(module)
+    event_loop = asyncio.get_event_loop()
     assert module.message == "..."
-    context.run_for(.5)
+    module.start(loop=event_loop)
+    event_loop.run_forever()
     assert module.message == "Hi!"
 
 
-def test_module_task(yeti, context):
+def test_module_task(yeti):
     class SetterMod(yeti.Module):
         message = "..."
 
@@ -32,8 +26,11 @@ def test_module_task(yeti, context):
         @asyncio.coroutine
         def set_message(self):
             self.message = "Hi!"
+            self.event_loop.stop()
+
     module = SetterMod()
-    context.load_module(module)
+    event_loop = asyncio.get_event_loop()
     assert module.message == "..."
-    context.run_for(.5)
+    module.start(loop=event_loop)
+    event_loop.run_forever()
     assert module.message == "Hi!"
