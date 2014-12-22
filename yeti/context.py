@@ -147,7 +147,7 @@ class Context(HookServer):
 
         :param module_name: The the name of the module to be unloaded from the context.
         """
-        self.thread_coroutine(self.unload_module(module_name))
+        self.thread_coroutine(self.unload_module_coroutine(module_name))
 
     @asyncio.coroutine
     def unload_module_coroutine(self, module_name):

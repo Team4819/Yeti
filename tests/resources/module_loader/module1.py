@@ -1,4 +1,6 @@
 import yeti
 
+
 class ModuleUno(yeti.Module):
-    pass
+
+    tally = 0

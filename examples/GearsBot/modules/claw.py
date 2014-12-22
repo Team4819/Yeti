@@ -1,9 +1,7 @@
 import asyncio
-
 import wpilib
-
 import yeti
-from yeti.wpilib_extensions import referee
+from yeti.wpilib_extensions import Referee
 
 class Claw(yeti.Module):
 
@@ -11,7 +9,7 @@ class Claw(yeti.Module):
     state_data = {"claw_open": False, "elevator_pos": 0, "wrist_pos": 0}
 
     def module_init(self):
-        self.referee = referee.Referee(self)
+        self.referee = Referee(self)
 
         self.joystick = wpilib.Joystick(0)
 

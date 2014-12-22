@@ -4,13 +4,13 @@ import math
 import wpilib
 
 import yeti
-from yeti.wpilib_extensions import referee
+from yeti.wpilib_extensions import Referee
 
 
 class ArcadeDrive(yeti.Module):
 
     def module_init(self):
-        self.referee = referee.Referee(self)
+        self.referee = Referee(self)
         self.joystick = wpilib.Joystick(0)
 
         self.front_left_motor = wpilib.Talon(1)
