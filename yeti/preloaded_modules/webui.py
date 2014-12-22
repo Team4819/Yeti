@@ -1,6 +1,7 @@
 import yeti
 import asyncio
 import os
+import json
 from aiohttp import web
 
 class WebUI(yeti.Module):
@@ -12,7 +13,17 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def data_handler(self, request):
-        return web.Response(body="JSON!".encode("utf-8"))
+        data_structure = dict()
+        data_structure["modules"] = list()
+        for modname in self.context.loaded_modules:
+            mod_object = self.context.loaded_modules[modname]
+            mod_data = dict()
+            mod_data["subsystem"] = modname
+            if hasattr(mod_object, "loader"):
+                mod_data["filename"] = mod_object.loader.module_path
+            data_structure["modules"].append(mod_data)
+        text = json.dumps(data_structure, allow_nan=False)
+        return web.Response(body=text.encode("utf-8"))
 
     @asyncio.coroutine
     def init_server(self):
