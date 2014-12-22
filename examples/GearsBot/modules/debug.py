@@ -12,7 +12,7 @@ class DebugMod(yeti.Module):
 
     @asyncio.coroutine
     def reload_mods(self, button):
+        context = yeti.get_context()
         while True:
             yield from button.until_rising()
-            print("Bark!")
-            yield from asyncio.sleep(.02)
+            context.call_hook("reload")

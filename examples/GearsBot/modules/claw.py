@@ -3,7 +3,7 @@ import asyncio
 import wpilib
 
 import yeti
-
+from yeti.wpilib_extensions import referee
 
 class Claw(yeti.Module):
 
@@ -11,9 +11,15 @@ class Claw(yeti.Module):
     state_data = {"claw_open": False, "elevator_pos": 0, "wrist_pos": 0}
 
     def module_init(self):
+        self.referee = referee.Referee(self)
+
         self.joystick = wpilib.Joystick(0)
+
         self.claw_motor = wpilib.Victor(7)
+        self.referee.watch(self.claw_motor)
+
         self.claw_contact = wpilib.DigitalInput(5)
+        self.referee.watch(self.claw_contact)
 
         #Get the control datastream
         self.control_datastream = yeti.get_datastream("claw_control")
@@ -23,18 +29,23 @@ class Claw(yeti.Module):
         self.state_datastream.set(self.state_data)
 
         self.elevator_motor = wpilib.Victor(5)
+        self.referee.watch(self.elevator_motor)
         self.elevator_pot = wpilib.AnalogPotentiometer(2)    # defaults to meters
+        self.referee.watch(self.elevator_pot)
 
         self.wrist_motor = wpilib.Victor(6)
+        self.referee.watch(self.wrist_motor)
         self.wrist_pot = wpilib.AnalogPotentiometer(3)
+        self.referee.watch(self.wrist_pot)
 
         #Get the PID controller
         self.elevator_controller = wpilib.PIDController(18, 0.2, 0, self.get_pid_in, self.set_pid_out)
         self.elevator_controller.enable()
+        self.referee.watch(self.elevator_controller)
 
         self.wrist_controller = wpilib.PIDController(0.05, 0, 0, self.get_pid_in, self.set_pid_out)
         self.wrist_controller.enable()
-
+        self.referee.watch(self.wrist_controller)
 
         # Let's show everything on the LiveWindow
         wpilib.LiveWindow.addActuator(self.name, "Claw Motor", self.claw_motor)

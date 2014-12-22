@@ -70,7 +70,7 @@ class HookServer(object):
                     hook.call(*args, **kwargs)
                     retval = True
                 except Exception as e:
-                    self.logger.exception("Exception on hook call: {}".format(e))
+                    self.logger.exception("Exception on hook '{}' call: {}".format(hook_name, e))
         return retval
 
     def remove_hook(self, hook):

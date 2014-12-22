@@ -4,30 +4,48 @@ import math
 import wpilib
 
 import yeti
+from yeti.wpilib_extensions import referee
 
 
 class ArcadeDrive(yeti.Module):
 
     def module_init(self):
+        self.referee = referee.Referee(self)
         self.joystick = wpilib.Joystick(0)
+
         self.front_left_motor = wpilib.Talon(1)
+        self.referee.watch(self.front_left_motor)
+
         self.back_left_motor = wpilib.Talon(2)
+        self.referee.watch(self.back_left_motor)
+
         self.front_right_motor = wpilib.Talon(3)
+        self.referee.watch(self.front_right_motor)
+
         self.back_right_motor = wpilib.Talon(4)
+        self.referee.watch(self.back_right_motor)
+
         self.drive = wpilib.RobotDrive(self.front_left_motor,
                                        self.back_left_motor,
                                        self.front_right_motor,
                                        self.back_right_motor)
+        self.referee.watch(self.drive)
 
         self.left_encoder = wpilib.Encoder(1, 2)
+        self.referee.watch(self.left_encoder)
+
         self.right_encoder = wpilib.Encoder(3, 4)
+        self.referee.watch(self.right_encoder)
 
         # Circumference in ft = 4in/12(in/ft)*PI
         self.left_encoder.setDistancePerPulse((4.0/12.0*math.pi) / 360.0)
         self.right_encoder.setDistancePerPulse((4.0/12.0*math.pi) / 360.0)
 
         self.rangefinder = wpilib.AnalogInput(6)
+        self.referee.watch(self.rangefinder)
+
         self.gyro = wpilib.Gyro(1)
+        self.referee.watch(self.gyro)
 
         wpilib.LiveWindow.addActuator("Drive Train", "Front_Left Motor", self.front_left_motor)
         wpilib.LiveWindow.addActuator("Drive Train", "Back Left Motor", self.back_left_motor)

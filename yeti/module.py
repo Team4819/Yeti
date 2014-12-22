@@ -19,8 +19,8 @@ class Module(HookServer):
         self.logger = logging.getLogger('yeti.' + self.name)
         self.tasks = list()
         self.add_hook("end_task", self._finish_task)
-        self.add_hook("module_init", self.module_init)
-        self.add_hook("module_deinit", self.module_deinit)
+        self.add_hook("init", self.module_init)
+        self.add_hook("deinit", self.module_deinit)
 
     def module_init(self):
         """A default `module_init` hook used for initializing the module, and starting any coroutines."""
@@ -41,7 +41,7 @@ class Module(HookServer):
             self.event_loop = asyncio.get_event_loop()
         else:
             self.event_loop = loop
-        self.call_hook("module_init")
+        self.call_hook("init")
         self.logger.info("Finished module init.")
 
     def stop(self):
@@ -52,7 +52,7 @@ class Module(HookServer):
         for task in self.tasks:
             task.cancel()
         self.event_loop = None
-        self.call_hook("module_deinit")
+        self.call_hook("deinit")
         self.logger.info("Finished module deinit.")
 
     def add_task(self, coroutine):
@@ -65,12 +65,15 @@ class Module(HookServer):
             raise ValueError("No event loop setup")
         task = asyncio.async(coroutine)
         task.add_done_callback(functools.partial(self.call_hook, "end_task"))
-        self.add_hook("module_deinit", task.cancel)
+        self.add_hook("deinit", task.cancel)
         self.call_hook("add_task", task)
         self.tasks.append(task)
 
     def _finish_task(self, fut):
-        if fut.exception():
-            if not self.call_hook("exception", fut.exception()):
-                return fut.result()
+        try:
+            if fut.exception():
+                if not self.call_hook("exception", fut.exception()):
+                    return fut.result()
+        except asyncio.CancelledError:
+            pass
 
