@@ -21,16 +21,42 @@ class WebUI(yeti.Module):
             mod_data["subsystem"] = modname
             if hasattr(mod_object, "loader"):
                 mod_data["filename"] = mod_object.loader.module_path
+                mod_data["status"] = "Loaded"
+                data_structure["fallback"] = mod_object.loader.fallback_list
             data_structure["modules"].append(mod_data)
         text = json.dumps(data_structure, allow_nan=False)
         return web.Response(body=text.encode("utf-8"))
 
     @asyncio.coroutine
+    def command_handler(self, request):
+        commands = {"load": self.load_command, "unload": self.unload_command, "reload": self.reload_command}
+        data = yield from request.post()
+        commands[data["command"]](data["target"])
+
+        #print(request.match_info['target'])
+        return web.Response(body=":)".encode("utf-8"))
+
+    def load_command(self, target):
+        loader = yeti.ModuleLoader()
+        loader.set_context(self.context)
+        loader.load(target)
+
+    def unload_command(self, target):
+        self.context.unload_module(target)
+
+    def reload_command(self, target):
+        self.context.loaded_modules[target].call_hook("reload")
+
+    @asyncio.coroutine
     def init_server(self):
         app = web.Application()
-        app.router.add_route("GET", "/json", self.data_handler)
+        app.router.add_route("GET", "/api/json", self.data_handler)
+        app.router.add_route("POST", "/api/command", self.command_handler)
         app.router.add_static("/", self.file_root)
-        srv = yield from self.event_loop.create_server(app.make_handler(),
+        self.srv = yield from self.event_loop.create_server(app.make_handler(),
                                                        '127.0.0.1', 8080)
+
         print("Yeti WebUI started at  http://127.0.0.1:8080")
-        return srv
+
+    def module_deinit(self):
+        self.srv.close()

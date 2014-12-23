@@ -49,10 +49,10 @@ class Module(HookServer):
         This is used to stop module operation. It cancels all running coroutines and calls the `module_deinit`
         hook to stop everything
         """
+        self.call_hook("deinit")
         for task in self.tasks:
             task.cancel()
         self.event_loop = None
-        self.call_hook("deinit")
         self.logger.info("Finished module deinit.")
 
     def add_task(self, coroutine):
