@@ -103,3 +103,11 @@ body {
   display: inline-block;
   border-radius: 50%;
 }
+
+.mod-panel{
+ display: inline-block;
+ margin: 20px;
+ width: 400px;
+ height: 300px;
+ vertical-align: top;
+}

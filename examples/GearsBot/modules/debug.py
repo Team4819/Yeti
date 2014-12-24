@@ -3,7 +3,10 @@ import wpilib
 import yeti
 from yeti.wpilib_extensions import buttons
 
-class DebugMod(yeti.Module):
+class Debug(yeti.Module):
+    """
+    A simple module for reloading all modules with the push of a button.
+    """
 
     def module_init(self):
         self.joystick = wpilib.Joystick(0)

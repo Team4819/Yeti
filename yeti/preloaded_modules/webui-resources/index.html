@@ -13,8 +13,6 @@
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="/bootstrap/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="/bootgrid/jquery.bootgrid.min.css">
-
 
     <!-- Custom styles for this template -->
     <link href="/dashboard.css" rel="stylesheet">
@@ -31,6 +29,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
+          <img src="/FIRSTvert_Reversed.gif" width="50">
           <a class="navbar-brand" href="#">Yeti Dashboard</a>
         </div>
       </div>
@@ -40,29 +39,19 @@
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar">
-            <li class="active"><a href="#">Modules <span class="sr-only">(current)</span></a></li>
+            <li><a class="navbar-link" onclick="command_reloadmod('all')" href="#">Reload All Modules</a></li>
+            <li><a class="navbar-link" href="#">Unload All Modules</a></li>
           </ul>
         </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 
-          <h2 class="sub-header">Modules</h2>
-          <div>
-            <table id="modtable" class="table table-condensed table-hover table-striped">
-              <thead>
-                <tr>
-                  <th data-column-id="subsystem" data-identifier="True">Subsystem</th>
-                  <th data-column-id="filename">Filename</th>
-                  <th data-column-id="status">Status</th>
-                  <th data-column-id="commands" data-formatter="commands">Commands</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h2 class="sub-header">Loaded Modules</h2>
+          <div id="load_input" style="margin: 20px">
+            <button id="load_button" class="btn btn-success,">Load Module</button>
+            <input id="module_target" name="target"/>
           </div>
-          <button id="load_button" class="btn btn-success,">Load Module</button>   <input id="module_target" name="target"/>
-          <div id="module_info">
-            <h3 class="sub-header">My Module</h3>
-            <
+          <div id="mod_blocks">
+
           </div>
         </div>
       </div>
@@ -73,7 +62,6 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/jquery.min.js"></script>
     <script src="/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/bootgrid/jquery.bootgrid.min.js"></script>
     <script src="/script.js"></script>
   </body>
 </html>

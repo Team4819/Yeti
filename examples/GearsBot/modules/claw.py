@@ -4,6 +4,9 @@ import yeti
 from yeti.wpilib_extensions import Referee
 
 class Claw(yeti.Module):
+    """
+    The CLAW!!!!
+    """
 
     control_data_default = {"claw_open": False, "elevator_pos": 0, "wrist_pos": 0}
     state_data = {"claw_open": False, "elevator_pos": 0, "wrist_pos": 0}

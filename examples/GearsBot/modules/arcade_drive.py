@@ -8,6 +8,9 @@ from yeti.wpilib_extensions import Referee
 
 
 class ArcadeDrive(yeti.Module):
+    """
+    This driver likes to play at the arcade!
+    """
 
     def module_init(self):
         self.referee = Referee(self)
