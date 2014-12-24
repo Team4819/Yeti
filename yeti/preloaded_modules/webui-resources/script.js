@@ -74,12 +74,45 @@ function send_command(command, target){
 function handle_command_response(json){
     data = jQuery.parseJSON(json)
     if(data.status != 0){
-        display_message(data.message)
+        display_message(data.message, "error")
+    }
+    else{
+       display_message(data.message, "success")
     }
 }
 
+var msg_html = "\
+<div class='alert dash_alert' role='alert'>\
+</div>\
+"
+
+var current_msgbox_id = 0
 function display_message(message, status){
-    alert(message)
+    $("#msg_bar").append(msg_html)
+    msg_box = $(".dash_alert").last()
+    msg_box.html(message)
+    msg_box.addClass("dash_alert_" + current_msgbox_id)
+
+    if(status == "error"){
+        msg_box.addClass("alert-danger")
+    }
+    else if(status == "warn"){
+        msg_box.addClass("alert-warning")
+    }
+    else if(status == "success"){
+        msg_box.addClass("alert-success")
+    }
+    else{
+        msg_box.addClass("alert-primary")
+    }
+
+    setTimeout('clear_message(' + current_msgbox_id + ')', 3000)
+    current_msgbox_id += 1
+    //alert(message)
+}
+
+function clear_message(id){
+    $(".dash_alert_" + id).remove()
 }
 
 function getDataLoop() {
@@ -87,10 +120,14 @@ function getDataLoop() {
     setTimeout(getDataLoop, 3000);
 }
 
-function getData(){$.getJSON("/api/json", onData)}
+function getData(){
+    $.getJSON("/api/json", onData)
+    .fail(function(){
+       display_message("Error on server connection.", "warn")
+    });
+}
 
 $(document).ready(function(){
-    $("#modtable").bootgrid()
     $("#load_button").click(load_handler)
     $('#module_target').keypress(function (e) {
         if (e.which == 13) {

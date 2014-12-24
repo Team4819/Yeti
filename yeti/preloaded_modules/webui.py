@@ -36,8 +36,8 @@ class WebUI(yeti.Module):
         commands = {"load": self.load_command, "unload": self.unload_command, "reload": self.reload_command}
         data = yield from request.post()
         try:
-            yield from commands[data["command"]](data["target"])
-            res = {"status": 0}
+            msg = yield from commands[data["command"]](data["target"])
+            res = {"status": 0, "message": msg}
         except Exception as e:
             res = {"status": -1, "message": str(e)}
             self.logger.error(str(e))
@@ -50,10 +50,12 @@ class WebUI(yeti.Module):
         loader = yeti.ModuleLoader()
         loader.set_context(self.context)
         yield from loader.load_coroutine(target)
+        return "Successfully loaded " + target
 
     @asyncio.coroutine
     def unload_command(self, target):
         yield from self.context.unload_module_coroutine(target)
+        return "Successfully unloaded " + target
 
     @asyncio.coroutine
     def reload_command(self, target):
@@ -61,6 +63,7 @@ class WebUI(yeti.Module):
             self.context.call_hook("reload")
         else:
             self.context.loaded_modules[target].call_hook("reload")
+        return "Successfully reloaded " + target
 
     @asyncio.coroutine
     def init_server(self):
