@@ -123,7 +123,7 @@ function getDataLoop() {
 function getData(){
     $.getJSON("/api/json", onData)
     .fail(function(){
-       display_message("Error on server connection.", "warn")
+       display_message("No response from server.", "warn")
     });
 }
 

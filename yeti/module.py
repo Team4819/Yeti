@@ -41,7 +41,11 @@ class Module(HookServer):
             self.event_loop = asyncio.get_event_loop()
         else:
             self.event_loop = loop
-        self.call_hook("init")
+        try:
+            self.call_hook("init", supress_exceptions=False)
+        except Exception as e:
+            self.call_hook("exception", e)
+
         self.logger.info("Finished module init.")
 
     def stop(self):

@@ -11,11 +11,11 @@ class WebUI(yeti.Module):
 
     def module_init(self):
         self.context = yeti.get_context()
-        self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "webui-resources")
+        self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
         self.add_task(self.init_server())
 
     @asyncio.coroutine
-    def data_handler(self, request):
+    def json_handler(self, request):
         data_structure = dict()
         data_structure["modules"] = list()
         for modname in self.context.loaded_modules:
@@ -59,16 +59,20 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def reload_command(self, target):
+        all_mods = self.context.get_modules()
         if target == "all":
-            self.context.call_hook("reload")
+            target_mods = [all_mods[mod] for mod in all_mods]
         else:
-            self.context.loaded_modules[target].call_hook("reload")
+            target_mods = [all_mods[target], ]
+        for mod in target_mods:
+            if hasattr(mod, "loader"):
+                yield from mod.loader.reload_coroutine()
         return "Successfully reloaded " + target
 
     @asyncio.coroutine
     def init_server(self):
         app = web.Application()
-        app.router.add_route("GET", "/api/json", self.data_handler)
+        app.router.add_route("GET", "/api/json", self.json_handler)
         app.router.add_route("POST", "/api/command", self.command_handler)
         app.router.add_static("/", self.file_root)
         self.srv = yield from self.event_loop.create_server(app.make_handler(), port=8080)

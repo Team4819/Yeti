@@ -1,9 +1,9 @@
 import logging
-import os
-import imp
+import importlib
 import traceback
 import inspect
 import asyncio
+import sys
 
 logger = logging.getLogger('yeti.module_loader')
 
@@ -43,8 +43,6 @@ class ModuleLoader(object):
 
         :param context: The context to use for the module
         """
-        if self.module_context is None:
-            context.add_hook("reload", self.reload)
         self.module_context = context
 
 
@@ -134,15 +132,12 @@ class ModuleLoader(object):
 
                 logger.info("Loading " + file_to_load)
 
-                if file_to_load == self.module_path:
-                    #This is the same file we have already loaded! just wipe the cache, if necessary, and reload it!
-                    path = getattr(self.module_import, "__cached__")
-                    if os.path.exists(path):
-                        os.remove(path)
-                    self.module_import = imp.reload(self.module_import)
+                #Reload the module if it is already loaded, otherwise import it anew..
+                if file_to_load in sys.modules:
+                    self.module_import = sys.modules[file_to_load]
+                    importlib.reload(self.module_import)
                 else:
-                    #Load the python file from scratch
-                    self.module_import = __import__(file_to_load, fromlist=[''])
+                    self.module_import = importlib.import_module(file_to_load)
 
                 #Get the module class
                 module_class = None
@@ -161,7 +156,6 @@ class ModuleLoader(object):
 
                 #Add control hooks
                 self.module_object.add_hook("exception", self._exception_handler)
-                self.module_object.add_hook("reload", self.reload)
 
                 #embed self
                 self.module_object.loader = self

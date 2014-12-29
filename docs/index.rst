@@ -13,6 +13,7 @@ Contents:
    :maxdepth: 2
 
    hacking_yeti
+   using_yeti
 
 Indices and tables
 ==================

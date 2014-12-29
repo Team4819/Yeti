@@ -20,18 +20,20 @@ def test_datastreams(yeti, module_interfaces, context):
     yeti.set_context(context)
     stream1 = module_interfaces.datastreams.get_datastream("uno")
     stream2 = module_interfaces.datastreams.get_datastream("duo")
-    assert stream1.get(1) == 1
-    assert stream1.get("hi there") == "hi there"
-    stream1.set("Hello!")
-    stream2.set(5)
-    assert module_interfaces.datastreams.get_datastream("uno").get("1") == "Hello!"
-    assert module_interfaces.datastreams.get_datastream("duo").get("1") == 5
+    assert stream1.get() == dict()
+    assert stream2.get() == dict()
+    stream1.push({"message": "Hello!"})
+    stream2.push({"number": 5})
+    assert module_interfaces.datastreams.get_datastream("uno").get()["message"] == "Hello!"
+    assert module_interfaces.datastreams.get_datastream("duo").get()["number"] == 5
 
 def test_datastream_events(yeti, module_interfaces, context):
     yeti.set_context(context)
     ds = module_interfaces.datastreams.get_datastream("uno")
-    assert ds.get(1) == 1
-    ev = ds.add_event_trigger(lambda x: x == "Hi there!")
+    assert ds.get() == dict()
+    ev = ds.set_event(lambda d: d.get("message", "") == "Hi there!")
     assert not ev.is_set()
-    ds.set("Hi there!")
+    ds.push({"message": "Scram!"})
+    assert not ev.is_set()
+    ds.push({"message": "Hi there!"})
     assert ev.is_set()

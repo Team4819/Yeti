@@ -161,3 +161,6 @@ class Context(HookServer):
         self.loaded_modules[module_name].stop()
         self.call_hook("module_unload", self.loaded_modules[module_name])
         del(self.loaded_modules[module_name])
+
+    def get_modules(self):
+        return self.loaded_modules.copy()

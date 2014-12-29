@@ -54,12 +54,13 @@ class HookServer(object):
         self._hooks[hook_name].append(hook)
         return hook
 
-    def call_hook(self, hook_name, *args, **kwargs):
+    def call_hook(self, hook_name, *args, supress_exceptions=True, **kwargs):
         """
         Calls all hooks that have been added to this :class:`.HookServer` for the method hook_name with all extra
         provided parameters.
 
         :param hook_name: The name of the method with hooks to be called.
+        :param supress_exceptions: Whether or not to suppress raised exceptions. Defaults to true.
 
         :returns: True if at least one hook was successfully called.
         """
@@ -70,7 +71,10 @@ class HookServer(object):
                     hook.call(*args, **kwargs)
                     retval = True
                 except Exception as e:
-                    self.logger.exception("Exception on hook '{}' call: {}".format(hook_name, e))
+                    if supress_exceptions:
+                        self.logger.exception("Exception on hook '{}' call: {}".format(hook_name, e))
+                    else:
+                        raise e
         return retval
 
     def remove_hook(self, hook):
