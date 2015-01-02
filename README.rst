@@ -4,4 +4,6 @@
 Yeti
 ====
 
-Similar to the command framework, Yeti is tailored to the special abilities of python, and designed for robotpy 2015
+Yeti is a Python runtime framework, designed for use on FIRST Robotics Competition Robots.
+It allows you to easily build modularized robot programs, with mechanisms to allow for rapid
+development and in-game failure recovery.

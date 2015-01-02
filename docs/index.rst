@@ -6,6 +6,10 @@
 Welcome to Yeti's documentation!
 ================================
 
+Yeti is a Python runtime framework, designed for use on FIRST Robotics Competition Robots.
+It allows you to easily build modularized robot programs, with mechanisms to allow for rapid
+development and in-game failure recovery.
+
 Contents:
 
 
