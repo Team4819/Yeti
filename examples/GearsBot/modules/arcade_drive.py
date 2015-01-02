@@ -4,7 +4,7 @@ import math
 import wpilib
 
 import yeti
-from yeti import interfaces
+from yeti.interfaces import datastreams, gamemode
 from yeti.wpilib_extensions import Referee
 
 
@@ -60,17 +60,12 @@ class ArcadeDrive(yeti.Module):
         wpilib.LiveWindow.addSensor("Drive Train", "Rangefinder", self.rangefinder)
         wpilib.LiveWindow.addSensor("Drive Train", "Gyro", self.gyro)
 
-        #Get the game-mode datastream
-        self.gamemode_datastream = interfaces.get_datastream("gamemode")
-
-        self.add_task(self.teleop_loop())
+        self.start_coroutine(self.teleop_loop())
 
     @asyncio.coroutine
     def teleop_loop(self):
-        #Grab the asyncio event to tell us when the robot is in teleoperated mode.
-        teleop_event = self.gamemode_datastream.set_event(lambda d: d["mode"] == "teleop")
         while True:
-            yield from teleop_event.wait()
+            yield from gamemode.wait_for_teleop()
             self.drive.arcadeDrive(-self.joystick.getY(), -self.joystick.getX())
             wpilib.SmartDashboard.putNumber("Left Distance", self.left_encoder.getDistance())
             wpilib.SmartDashboard.putNumber("Right Distance", self.right_encoder.getDistance())
@@ -78,4 +73,3 @@ class ArcadeDrive(yeti.Module):
             wpilib.SmartDashboard.putNumber("Right Speed", self.right_encoder.getRate())
             wpilib.SmartDashboard.putNumber("Gyro", self.gyro.getAngle())
             yield from asyncio.sleep(.05)
-        self.gamemode_datastream.drop_event(teleop_event)

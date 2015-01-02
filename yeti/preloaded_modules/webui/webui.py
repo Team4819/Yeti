@@ -12,7 +12,7 @@ class WebUI(yeti.Module):
     def module_init(self):
         self.context = yeti.get_context()
         self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
-        self.add_task(self.init_server())
+        self.start_coroutine(self.init_server())
 
     @asyncio.coroutine
     def json_handler(self, request):

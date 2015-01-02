@@ -10,7 +10,7 @@ class Debug(yeti.Module):
 
     def module_init(self):
         self.joystick = wpilib.Joystick(0)
-        self.add_task(self.reload_mods())
+        self.start_coroutine(self.reload_mods())
 
     @asyncio.coroutine
     def reload_mods(self):

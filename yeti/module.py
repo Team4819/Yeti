@@ -59,7 +59,7 @@ class Module(HookServer):
         self.event_loop = None
         self.logger.info("Finished module deinit.")
 
-    def add_task(self, coroutine):
+    def start_coroutine(self, coroutine):
         """
         Schedule an asyncio coroutine in the module's event loop, and add hooks to handle coroutine failure.
 

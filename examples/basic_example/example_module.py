@@ -5,8 +5,8 @@ from yeti.interfaces import events
 class Example(yeti.Module):
 
     def module_init(self):
-        self.add_task(self.say_hi("Hello world!"))
-        self.add_task(self.tactfull_hello())
+        self.start_coroutine(self.say_hi("Hello world!"))
+        self.start_coroutine(self.tactfull_hello())
 
     @asyncio.coroutine
     def tactfull_hello(self):

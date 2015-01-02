@@ -1,8 +1,6 @@
 
-Hacking Yeti
-============
-
-One of the core design goals of yeti was to make it hackable in the extreme. Every component has tremendous freedom to be used and abused, with no complaint.
+Yeti API
+========
 
 Yeti is constructed like an onion, each layer adding another set of features to the big picture, and can be easily modified or extended to suit your needs.
 
@@ -28,9 +26,9 @@ Two different Interfaces are default to yeti -- events and datastreams.
 .. toctree::
     :hidden:
 
-    hacking_yeti/HookServer
-    hacking_yeti/Module
-    hacking_yeti/Context
-    hacking_yeti/ModuleLoader
-    hacking_yeti/ConfigManager
-    hacking_yeti/Interfaces
+    yeti_api/HookServer
+    yeti_api/Module
+    yeti_api/Context
+    yeti_api/ModuleLoader
+    yeti_api/ConfigManager
+    yeti_api/Interfaces

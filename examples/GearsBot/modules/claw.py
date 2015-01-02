@@ -1,7 +1,7 @@
 import asyncio
 import wpilib
 import yeti
-from yeti import interfaces
+from yeti.interfaces import datastreams, gamemode
 from yeti.wpilib_extensions import Referee
 
 class Claw(yeti.Module):
@@ -25,11 +25,11 @@ class Claw(yeti.Module):
         self.referee.watch(self.claw_contact)
 
         #Get the control datastream
-        self.control_datastream = interfaces.get_datastream("claw_control")
+        self.control_datastream = datastreams.get_datastream("claw_control")
         self.control_datastream.push(self.control_data_default)
 
         #Get the state datastream
-        self.state_datastream = interfaces.get_datastream("claw_state")
+        self.state_datastream = datastreams.get_datastream("claw_state")
         self.state_datastream.push(self.state_data)
 
         self.elevator_motor = wpilib.Victor(5)
@@ -66,12 +66,9 @@ class Claw(yeti.Module):
         wpilib.LiveWindow.addSensor(self.name, "Wrist Pot", self.wrist_pot)
         wpilib.LiveWindow.addActuator(self.name, "Wrist PID", self.wrist_controller)
 
-        #Get the gamemode datastream
-        self.gamemode_datastream = interfaces.get_datastream("gamemode")
-
         #Setup tasks
-        self.add_task(self.teleop_loop())
-        self.add_task(self.run_loop())
+        self.start_coroutine(self.teleop_loop())
+        self.start_coroutine(self.run_loop())
 
     def get_pid_in(self):
         value = self.elevator_pot.get()
@@ -82,10 +79,8 @@ class Claw(yeti.Module):
 
     @asyncio.coroutine
     def teleop_loop(self):
-        #Grab the asyncio event to tell us when the robot is in teleoperated mode.
-        teleop_event = self.gamemode_datastream.set_event(lambda d: d["mode"] == "teleop")
         while True:
-            yield from teleop_event.wait()
+            yield from gamemode.wait_for_teleop()
             claw_tgt = self.state_data["claw_open"]
             elevator_tgt = self.state_data["elevator_pos"]
             wrist_tgt = self.state_data["wrist_pos"]
@@ -114,14 +109,11 @@ class Claw(yeti.Module):
             control_data = {"claw_open": claw_tgt, "elevator_pos": elevator_tgt, "wrist_pos": wrist_tgt}
             self.control_datastream.push(control_data)
             yield from asyncio.sleep(.03)
-        self.gamemode_datastream.drop_event(teleop_event)
 
     @asyncio.coroutine
     def run_loop(self):
-        #Grab the asyncio event to tell us when the robot is enabled.
-        enabled_event = self.gamemode_datastream.set_event(lambda d: d["enabled"])
         while True:
-            yield from enabled_event.wait()
+            yield from gamemode.wait_for_enabled()
             control_data = self.control_datastream.get()
             if control_data["claw_open"]:
                 self.claw_motor.set(-1)
@@ -132,6 +124,4 @@ class Claw(yeti.Module):
             self.state_data["wrist_pos"] = control_data["wrist_pos"]
             self.elevator_controller.setSetpoint(control_data["elevator_pos"])
             self.wrist_controller.setSetpoint(control_data["wrist_pos"])
-            #self.pid_controller.calculate()
             yield from asyncio.sleep(.2)
-        self.gamemode_datastream.drop_event(enabled_event)

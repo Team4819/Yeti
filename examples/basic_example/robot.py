@@ -1,6 +1,6 @@
 import wpilib
 import yeti
-from yeti import interfaces
+from yeti.interfaces import gamemode
 
 class LittleRobot(wpilib.IterativeRobot):
     """
@@ -9,25 +9,22 @@ class LittleRobot(wpilib.IterativeRobot):
 
     def robotInit(self):
         #First get the context initialized, as ModuleLoaders use it to run
-        context = yeti.Context()
-        context.start()
+        self.context = yeti.Context()
+        self.context.start()
 
         #Then use a ConfigManager to load modules specified in a configuration file
         config_manager = yeti.ConfigManager()
         config_manager.parse_config("mods.conf")
-        config_manager.load_startup_mods(context)
-
-        #In this example we are using a datastream to communicate game mode between modules.
-        self.mode_datastream = interfaces.get_datastream("gamemode", context=self.context)
+        config_manager.load_startup_mods(self.context)
 
     def teleopInit(self):
-        self.mode_datastream.push_threadsafe({"mode": "teleop"}, context=self.context)
+        gamemode.set_gamemode(gamemode.TELEOPERATED, context=self.context)
 
     def disabledInit(self):
-        self.mode_datastream.push_threadsafe({"mode": "disabled"}, context=self.context)
+        gamemode.set_gamemode(gamemode.DISABLED, context=self.context)
 
     def autonomousInit(self):
-        self.mode_datastream.push_threadsafe({"mode": "auto"}, context=self.context)
+        gamemode.set_gamemode(gamemode.AUTONOMOUS, context=self.context)
 
 if __name__ == "__main__":
     wpilib.run(LittleRobot)
