@@ -21,7 +21,7 @@ def test_module_task(yeti):
         message = "..."
 
         def module_init(self):
-            self.add_task(self.set_message())
+            self.start_coroutine(self.set_message())
 
         @asyncio.coroutine
         def set_message(self):

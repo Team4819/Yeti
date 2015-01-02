@@ -14,7 +14,6 @@ robot programs, with mechanisms to promote rapid development and in-game failure
 .. note:: This guide assumes some familiarity with RobotPy and python in general.
 
           If this is the first you have heard of RobotPy, you can read about it here:
-
           `About RobotPy <http://robotpy.github.io/about/>`_
 
 .. note:: Yeti heavily utilizes asyncio, which is an asynchronous library that comes default
@@ -151,6 +150,36 @@ coroutines
 ^^^^^^^^^^
 .. note:: In breif, asyncio coroutines are fake threads. They have their own train of execution, deferring control
           whenever they "yeild from" something. To initialize a coroutine, use the "@asyncio.coroutine" decorator,
-          as seen below.
+          as seen below. For more information, read the "Asyncio Documentation"
 
+Here is the run loop used in the above module example:
+
+::
+
+    @asyncio.coroutine
+    def teleop_loop(self):
+
+        #Loop forever
+        while True:
+            #Wait until we are in teleop mode.
+            yield from gamemode.wait_for_teleop()
+
+            #Get the joystick values and drive the motors.
+            self.robotdrive.arcadeDrive(-self.joystick.getY(), -self.joystick.getX())
+
+            #Pause for a moment to let the rest of the code run.
+            yield from asyncio.sleep(.05)
+
+Since this is a coroutine, and we don't have any reason for it to stop without the module
+getting unloaded, we use an infinite loop. For each iteration we wait for the robot to
+be in teleoperated mode before setting the RobotDrive values. Before we loop back, we
+sleep for .05 of a second to let the rest of the robot program run.
+
+.. note:: "yield from" is used to transition from one coroutine's execution to another.
+          "gamemode.wait_for_teleop()" Is a coroutine, supplied by the gamemode interface,
+          which will pause execution in this "fake thread" until the robot is put into
+          teleoperated mode. When this finishes, execution will return to our coroutine.
+
+.. note:: Rather than using python's native time.sleep(), or wpilib's Timer.delay(), always
+          use asyncio.sleep(), which allows other coroutines to execute.
 
