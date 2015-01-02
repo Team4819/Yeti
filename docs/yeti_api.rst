@@ -23,6 +23,11 @@ Two different Interfaces are default to yeti -- events and datastreams.
 .. autosummary::
     yeti.interfaces
 
+Yeti also comes with a set of convenient extensions to wpilib, which are designed to make module programming easier.
+
+.. autosummary::
+    yeti.wpilib_extensions
+
 .. toctree::
     :hidden:
 
@@ -32,3 +37,4 @@ Two different Interfaces are default to yeti -- events and datastreams.
     yeti_api/ModuleLoader
     yeti_api/ConfigManager
     yeti_api/Interfaces
+    yeti_api/WpilibExtensions

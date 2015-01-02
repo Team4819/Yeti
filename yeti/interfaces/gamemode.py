@@ -43,6 +43,8 @@ def wait_for_gamemode(modes, context=None):
     """
     Waits until one of the indicated modes is set.
 
+    This is an asyncio coroutine.
+
     :param modes: One or more modes to wait for.
     :param context: The optional context to use for data storage. If none, the current
         thread’s context will be used.
@@ -77,6 +79,8 @@ def wait_for_disabled(context=None):
     """
     Waits until the disabled mode is set.
 
+    This is an asyncio coroutine.
+
     :param context: The optional context to use for data storage. If none, the current
         thread’s context will be used.
     """
@@ -86,6 +90,8 @@ def wait_for_disabled(context=None):
 def wait_for_teleop(context=None):
     """
     Waits until the teleoperated mode is set.
+
+    This is an asyncio coroutine.
 
     :param context: The optional context to use for data storage. If none, the current
         thread’s context will be used.
@@ -97,6 +103,8 @@ def wait_for_autonomous(context=None):
     """
     Waits until the autonomous mode is set.
 
+    This is an asyncio coroutine.
+
     :param context: The optional context to use for data storage. If none, the current
         thread’s context will be used.
     """
@@ -106,6 +114,8 @@ def wait_for_autonomous(context=None):
 def wait_for_enabled(context=None):
     """
     Waits until either the autonomous mode or the teleoperated mode is set.
+
+    This is an asyncio coroutine.
 
     :param context: The optional context to use for data storage. If none, the current
         thread’s context will be used.
