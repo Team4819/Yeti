@@ -6,13 +6,26 @@ import copy
 context_datastore_key = "datastreams"
 
 
-def get_datastream(dsid, context=None):
+def get_datastream(id, context=None):
+    """
+    Retrieves a :meth:`Datastream` instance for the given Datastream ID, creating
+    one if nonexistant.
+
+    This method is thread-safe.
+
+    :param id: The ID of the Datastream instance to get, or to create.
+    :param context: The optional context to use. If None, then this will use the
+        context registered for the current thread.
+
+    :returns: An instance of :class:`Datastream`
+    """
     if context is None:
         context = get_context()
-    datastreams_data = context.get_interface_data(context_datastore_key)[0]
-    if dsid not in datastreams_data:
-        datastreams_data[dsid] = Datastream()
-    return datastreams_data[dsid]
+    datastreams_data, lock = context.get_interface_data(context_datastore_key)
+    with lock:
+        if id not in datastreams_data:
+            datastreams_data[id] = Datastream()
+        return datastreams_data[id]
 
 
 class Datastream(object):
@@ -28,6 +41,8 @@ class Datastream(object):
 
     def push(self, data):
         """
+        Saves data to the Datastream
+
         :param data: The dictionary of data to :meth:`dict.update()` the existing
          dictionary with.
         """
@@ -36,10 +51,11 @@ class Datastream(object):
 
     def push_threadsafe(self, data, context=None):
         """
-        Schedules :meth:`.set` to be run in the current context's event loop.
+        Schedules :meth:`.push()` to be run in the current context's event loop.
+
         This method is thread-safe.
 
-        :param data: The dictionary of data to give to :meth:`.set`
+        :param data: The dictionary of data to give to :meth:`.push()`
         :param context: The (optional) context to use for scheduling. Otherwise
             the current thread's context will be used.
         """
@@ -49,7 +65,9 @@ class Datastream(object):
 
     def get(self):
         """
-        :returns A copy of the contained data.
+        Retrieves data from the Datastream
+
+        :returns: A copy of the contained data.
         """
         return self.data.copy()
 
@@ -63,7 +81,7 @@ class Datastream(object):
 
     def set_event(self, conditional, event=None):
         """
-        Adds a conditional to be evaluated at each :meth:`set()`. The event will be triggered
+        Adds a conditional to be evaluated at each :meth:`push()`. The event will be triggered
         when the conditional returns true, and cleared when the conditional returns false.
 
         :param conditional: A reference to a callable that accepts one argument,
@@ -71,7 +89,7 @@ class Datastream(object):
         :param event: The optional event object to use. If none is provided, a new
             asyncio event will be created.
 
-        :returns The event that will be triggered when the conditional returns True.
+        :returns: The event that will be triggered when the conditional returns True.
         """
         if event is None:
             event = asyncio.Event()
@@ -87,7 +105,7 @@ class Datastream(object):
 
         :param event: The event object to remove.
 
-        :returns True if successful.
+        :returns: True if successful.
         """
         for trigger in self.event_triggers[:]:
             if event is trigger["event"]:

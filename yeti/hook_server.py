@@ -3,8 +3,8 @@ import logging
 
 class Hook(object):
     """
-    This stores a reference to a method, and can be used to remove the hook's reference from the source :class:HookServer
-    Hook objects are generally only created by a :class:`.HookServer`.
+    This stores a reference to a method, and can be used to remove the hook's reference from the source :class:`HookServer`.
+    Hook objects are generally only created by a :class:`HookServer`.
     """
 
     def __init__(self, hook_server, hook_name, func):

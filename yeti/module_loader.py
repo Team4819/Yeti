@@ -142,9 +142,11 @@ class ModuleLoader(object):
                 #Get the module class
                 module_class = None
                 for name, obj in inspect.getmembers(self.module_import):
-                    if inspect.isclass(obj):
+                    if inspect.isclass(obj) and hasattr(obj, "module_init"):
                         module_class = obj
                         break
+                else:
+                    raise ModuleLoadError("No compatible module class found in " + file_to_load)
 
                 #Initialize the actual module object
                 self.module_object = module_class()

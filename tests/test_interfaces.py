@@ -2,8 +2,8 @@ import pytest
 
 @pytest.fixture
 def module_interfaces():
-    from yeti import module_interfaces
-    return module_interfaces
+    from yeti import interfaces
+    return interfaces
 
 def test_events(yeti, module_interfaces, context):
     yeti.set_context(context)

@@ -1,6 +1,6 @@
 import asyncio
 import yeti
-from yeti.module_interfaces import events
+from yeti.interfaces import events
 
 class Example(yeti.Module):
 

@@ -68,7 +68,7 @@ class ConfigManager(object):
         self.module_loaders[name] = module_loader
         return module_loader
 
-    def parse_config_file(self, path):
+    def parse_config(self, path):
         """
         Parse the config file.
 

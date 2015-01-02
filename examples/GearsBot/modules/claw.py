@@ -1,6 +1,7 @@
 import asyncio
 import wpilib
 import yeti
+from yeti import interfaces
 from yeti.wpilib_extensions import Referee
 
 class Claw(yeti.Module):
@@ -24,11 +25,11 @@ class Claw(yeti.Module):
         self.referee.watch(self.claw_contact)
 
         #Get the control datastream
-        self.control_datastream = yeti.get_datastream("claw_control")
+        self.control_datastream = interfaces.get_datastream("claw_control")
         self.control_datastream.push(self.control_data_default)
 
         #Get the state datastream
-        self.state_datastream = yeti.get_datastream("claw_state")
+        self.state_datastream = interfaces.get_datastream("claw_state")
         self.state_datastream.push(self.state_data)
 
         self.elevator_motor = wpilib.Victor(5)
@@ -66,7 +67,7 @@ class Claw(yeti.Module):
         wpilib.LiveWindow.addActuator(self.name, "Wrist PID", self.wrist_controller)
 
         #Get the gamemode datastream
-        self.gamemode_datastream = yeti.get_datastream("gamemode")
+        self.gamemode_datastream = interfaces.get_datastream("gamemode")
 
         #Setup tasks
         self.add_task(self.teleop_loop())

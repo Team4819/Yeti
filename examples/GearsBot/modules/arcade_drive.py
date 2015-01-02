@@ -4,6 +4,7 @@ import math
 import wpilib
 
 import yeti
+from yeti import interfaces
 from yeti.wpilib_extensions import Referee
 
 
@@ -60,7 +61,7 @@ class ArcadeDrive(yeti.Module):
         wpilib.LiveWindow.addSensor("Drive Train", "Gyro", self.gyro)
 
         #Get the game-mode datastream
-        self.gamemode_datastream = yeti.get_datastream("gamemode")
+        self.gamemode_datastream = interfaces.get_datastream("gamemode")
 
         self.add_task(self.teleop_loop())
 
