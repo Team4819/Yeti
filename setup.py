@@ -2,7 +2,7 @@
 
 from os.path import dirname, exists, join
 import sys, subprocess
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup_dir = dirname(__file__)
 base_package = 'yeti'
@@ -35,13 +35,21 @@ with open(join(setup_dir, 'README.rst'), 'r') as readme_file:
 setup(
     name='yeti',
     version=__version__,
-    description='Yeti',
+    description="Yeti",
     long_description=long_description,
     author='Christian Balcom',
     author_email='robot.inventor@gmail.com',
-    url='https://github.com/team4819/yeti',
+    url='https://github.com/Team4819/yeti',
     keywords='frc first robotics asyncio',
-    packages=[base_package,
-              base_package + '.interfaces'],
+    packages=find_packages(),
+    license="BSD License",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.4",
+        "Topic :: Scientific/Engineering"]
     )
 
