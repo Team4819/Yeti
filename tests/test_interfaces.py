@@ -9,7 +9,7 @@ def test_events(yeti, module_interfaces, context):
     yeti.set_context(context)
     assert not module_interfaces.events.get_event("uno").is_set()
     assert not module_interfaces.events.get_event("duo").is_set()
-    module_interfaces.events.trigger_event("uno")
+    module_interfaces.events.set_event("uno")
     assert module_interfaces.events.get_event("uno").is_set()
     assert not module_interfaces.events.get_event("duo").is_set()
     module_interfaces.events.clear_event("uno")
