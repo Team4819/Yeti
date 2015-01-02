@@ -10,10 +10,10 @@ Contents:
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   hacking_yeti
    using_yeti
+   hacking_yeti
 
 Indices and tables
 ==================

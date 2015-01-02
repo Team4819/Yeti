@@ -2,8 +2,6 @@
 Context
 -------
 
-.. automodule:: yeti.context
-
     The Context class is the second layer of yeti, providing an interface to run modules in a group.
 
     Contexts are used by adding module objects to them, via :py:meth:`Context.load_module()`, and running :py:meth:`Context.start()`. The context will spawn a new thread and create an asyncio event loop for it.
@@ -18,10 +16,10 @@ Context
     - `module_load`
     - `module_unload`
 
-    .. autofunction:: set_context
+    .. autofunction:: yeti.set_context
 
-    .. autofunction:: get_context
+    .. autofunction:: yeti.get_context
 
-    .. autoclass:: Context
+    .. autoclass:: yeti.Context
         :members:
         :show-inheritance:
