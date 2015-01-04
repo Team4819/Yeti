@@ -65,6 +65,10 @@ function command_reloadmod(modname){
     send_command("reload", modname)
 }
 
+function command_loadconf(confname){
+    send_command("load_config", confname)
+}
+
 function send_command(command, target){
     data = { command: command, target: target }
     $.post("/api/command", data, handle_command_response)

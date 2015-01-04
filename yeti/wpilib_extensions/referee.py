@@ -10,8 +10,8 @@ class Referee:
 
     def watch(self, wpilib_object):
         """Keep track of a wpilib object."""
-        assert hasattr(wpilib_object, "free")
-        self.refs.append(wpilib_object)
+        if hasattr(wpilib_object, "free"):
+            self.refs.append(wpilib_object)
 
     def free_all(self):
         """Frees all watched wpilib references."""

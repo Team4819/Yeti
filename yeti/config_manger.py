@@ -15,6 +15,7 @@ class ConfigManager(object):
     """
 
     _STARTUP_MOD_SECTION = "StartupMods"
+    _config_path = ""
 
     def __init__(self):
         self.config_structure = None
@@ -27,6 +28,7 @@ class ConfigManager(object):
 
         :param context: The context to load the modules into.
         """
+
         if self.config_structure is None:
             raise ConfigurationError("No config file loaded.")
         for module_name in self.config_structure[self._STARTUP_MOD_SECTION]:
@@ -41,6 +43,10 @@ class ConfigManager(object):
 
         :returns: The created :class:`ModuleLoader`
         """
+
+        #Add reference to context for introspection.
+        context.config_manager = self
+
         if self.config_structure is None:
             fallback_list = [name]
 
@@ -76,6 +82,11 @@ class ConfigManager(object):
 
         :returns: The dictionary of the parsed config file.
         """
+
+        if path == "":
+            path = self._config_path
+        self._config_path = path
+
         #Open the file
         f = open(path)
         section = None

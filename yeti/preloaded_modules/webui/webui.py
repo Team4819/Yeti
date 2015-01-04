@@ -33,7 +33,7 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def command_handler(self, request):
-        commands = {"load": self.load_command, "unload": self.unload_command, "reload": self.reload_command}
+        commands = {"load": self.load_command, "load_config": self.load_config, "unload": self.unload_command, "reload": self.reload_command}
         data = yield from request.post()
         try:
             msg = yield from commands[data["command"]](data["target"])
@@ -47,9 +47,12 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def load_command(self, target):
-        loader = yeti.ModuleLoader()
-        loader.set_context(self.context)
-        yield from loader.load_coroutine(target)
+        if hasattr(self.context, "config_manager"):
+            self.context.config_manager.load(target)
+        else:
+            loader = yeti.ModuleLoader()
+            loader.set_context(self.context)
+            yield from loader.load_coroutine(target)
         return "Successfully loaded " + target
 
     @asyncio.coroutine
@@ -68,6 +71,15 @@ class WebUI(yeti.Module):
             if hasattr(mod, "loader"):
                 yield from mod.loader.reload_coroutine()
         return "Successfully reloaded " + target
+
+    @asyncio.coroutine
+    def load_config(self, path):
+        for module in self.context.get_modules():
+            yield from self.context.unload_module_coroutine(module)
+        if not hasattr(self.context, "config_manager"):
+            self.context.config_manager = yeti.ConfigManager()
+        self.context.config_manager.parse_config(path)
+        self.context.config_manager.load_startup_mods(self.context)
 
     @asyncio.coroutine
     def init_server(self):

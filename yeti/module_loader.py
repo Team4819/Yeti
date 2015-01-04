@@ -146,7 +146,7 @@ class ModuleLoader(object):
                         module_class = obj
                         break
                 else:
-                    raise ModuleLoadError("No compatible module class found in " + file_to_load)
+                    raise ModuleLoadError("Loader", "No compatible module class found in " + file_to_load)
 
                 #Initialize the actual module object
                 self.module_object = module_class()

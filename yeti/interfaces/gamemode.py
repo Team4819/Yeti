@@ -27,6 +27,7 @@ def set_gamemode(mode, context=None):
         data["mode"] = mode
         context.thread_coroutine(_on_gamemode_set(mode, context))
 
+@asyncio.coroutine
 def _on_gamemode_set(mode, context):
     """
     Sets all saved events for the given gamemode

@@ -183,3 +183,14 @@ sleep for .05 of a second to let the rest of the robot program run.
 .. note:: Rather than using python's native time.sleep(), or wpilib's Timer.delay(), always
           use asyncio.sleep(), which allows other coroutines to execute.
 
+Yeti WebUI
+----------
+Yeti comes preinstalled with a convenient WebUI, where you can control what is
+going on with loaded modules. From here you can load, unload, and reload any module
+with the click of a button.
+
+To run the webui, set "yeti.preloaded_modules.webui" to load from your module
+config file. The http server will start up on port 8080, and you should be able
+to reach it at <computer_ip>:8080/index.html .
+
+.. image:: images/WebUI.png
