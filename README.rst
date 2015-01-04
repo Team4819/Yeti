@@ -18,7 +18,7 @@ All Yeti documentation can be found at http://yeti-robotics-runtime.readthedocs.
 License
 =======
 
-See :ref:`LICENSE.txt`
+See LICENSE.txt
 
 Authors
 =======
