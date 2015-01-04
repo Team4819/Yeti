@@ -13,12 +13,12 @@ development and in-game failure recovery.
 Documentation
 =============
 
-All Yeti documentation can be found at http://yeti-robot-runtime.readthedocs.org
+All Yeti documentation can be found at http://yeti-robotics-runtime.readthedocs.org
 
 License
 =======
 
-See [LICENSE.txt](LICENSE.txt)
+See :ref:`LICENSE.txt`
 
 Authors
 =======
