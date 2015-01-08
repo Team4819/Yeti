@@ -48,7 +48,7 @@ class WebUI(yeti.Module):
     @asyncio.coroutine
     def load_command(self, target):
         if hasattr(self.context, "config_manager"):
-            self.context.config_manager.load(target)
+            self.context.config_manager.load_module(self.context, target)
         else:
             loader = yeti.ModuleLoader()
             loader.set_context(self.context)

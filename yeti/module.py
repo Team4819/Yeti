@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import functools
+import inspect
 
 from .hook_server import HookServer
 
@@ -20,6 +21,7 @@ class Module(HookServer):
         self.tasks = list()
         self.add_hook("end_task", self._finish_task)
         self.add_hook("init", self.module_init)
+        self.add_hook("init", self.autorun_coroutines)
         self.add_hook("deinit", self.module_deinit)
 
     def module_init(self):
@@ -73,6 +75,11 @@ class Module(HookServer):
         self.call_hook("add_task", task)
         self.tasks.append(task)
 
+    def autorun_coroutines(self):
+        for name, obj in inspect.getmembers(self):
+            if hasattr(obj, "autorun") and obj.autorun:
+                self.start_coroutine(obj())
+
     def _finish_task(self, fut):
         try:
             if fut.exception():
@@ -81,3 +88,9 @@ class Module(HookServer):
         except asyncio.CancelledError:
             pass
 
+def autorun_coroutine(func):
+    """
+    A decorator that sets the coroutine to schedule automatically upon module init.
+    """
+    func.autorun = True
+    return func

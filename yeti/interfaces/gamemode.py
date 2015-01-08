@@ -5,12 +5,14 @@ gamemode between modules.
 
 from ..context import get_context
 import asyncio
+import wpilib
 
 context_data_key = "gamemode"
 
 DISABLED = 0
 TELEOPERATED = 1
 AUTONOMOUS = 2
+
 
 def set_gamemode(mode, context=None):
     """
@@ -24,8 +26,11 @@ def set_gamemode(mode, context=None):
         context = get_context()
     data, lock = context.get_interface_data(context_data_key)
     with lock:
+        if mode != data.get("mode", " "):
+            data["last_change"] = wpilib.Timer.getFPGATimestamp()
         data["mode"] = mode
         context.thread_coroutine(_on_gamemode_set(mode, context))
+
 
 @asyncio.coroutine
 def _on_gamemode_set(mode, context):
@@ -37,6 +42,52 @@ def _on_gamemode_set(mode, context):
     if events is not None:
         for event in events:
             event.set()
+
+#Gamemode Conditionals#############################
+
+
+def _is_gamemode(modes, context=None):
+    """
+    Is the robot in one of the given gamemodes?
+    """
+    if not (isinstance(modes, tuple) or isinstance(modes, list)):
+        modes = [modes, ]
+
+    if context is None:
+        context = get_context()
+    data, lock = context.get_interface_data(context_data_key)
+
+    return data.get("mode", "") in modes
+
+
+def is_enabled():
+    """
+    :returns: True if the robot is Enabled.
+    """
+    return _is_gamemode((AUTONOMOUS, TELEOPERATED))
+
+
+def is_teleop():
+    """
+    :returns: True if the robot is in Teleoperated mode.
+    """
+    return _is_gamemode(TELEOPERATED)
+
+
+def is_autonomous():
+    """
+    :returns: True if the robot is in Autonomous mode.
+    """
+    return _is_gamemode(AUTONOMOUS)
+
+
+def is_disabled():
+    """
+    :returns: True if the robot is Disabled.
+    """
+    return _is_gamemode(DISABLED)
+
+#Gamemode Wait Coroutines############################
 
 
 @asyncio.coroutine
@@ -51,7 +102,7 @@ def wait_for_gamemode(modes, context=None):
         thread’s context will be used.
     """
 
-    if isinstance(modes, int):
+    if not (isinstance(modes, tuple) or isinstance(modes, list)):
         modes = [modes, ]
 
     if context is None:
@@ -75,6 +126,7 @@ def wait_for_gamemode(modes, context=None):
         events_key = "events-mode-" + str(mode)
         data[events_key].remove(event)
 
+
 @asyncio.coroutine
 def wait_for_disabled(context=None):
     """
@@ -86,6 +138,7 @@ def wait_for_disabled(context=None):
         thread’s context will be used.
     """
     yield from wait_for_gamemode(DISABLED, context=context)
+
 
 @asyncio.coroutine
 def wait_for_teleop(context=None):
@@ -99,6 +152,7 @@ def wait_for_teleop(context=None):
     """
     yield from wait_for_gamemode(TELEOPERATED, context=context)
 
+
 @asyncio.coroutine
 def wait_for_autonomous(context=None):
     """
@@ -111,6 +165,7 @@ def wait_for_autonomous(context=None):
     """
     yield from wait_for_gamemode(AUTONOMOUS, context=context)
 
+
 @asyncio.coroutine
 def wait_for_enabled(context=None):
     """
@@ -122,3 +177,64 @@ def wait_for_enabled(context=None):
         thread’s context will be used.
     """
     yield from wait_for_gamemode((TELEOPERATED, AUTONOMOUS), context=context)
+
+#Gamemode Coroutine Decorators##########################
+
+
+def _gamemode_task(f, gamemodes):
+    @asyncio.coroutine
+    def wrapper_func(*args, **kwargs):
+        while True:
+            yield from wait_for_gamemode(gamemodes)
+            yield from f(*args, **kwargs)
+            #Give the rest of the robot a moment to breath before looping
+            yield from asyncio.sleep(.05)
+    wrapper_func.autorun = True
+    return wrapper_func
+
+
+def disabled_task(f):
+    """
+    A decorator function that causes the decorated coroutine to run continually
+    when the robot is Disabled.
+    """
+    return _gamemode_task(f, DISABLED)
+
+
+def teleop_task(f):
+    """
+    A decorator function that causes the decorated coroutine to run continually
+    when the robot is in Teleoperated Mode.
+    """
+    return _gamemode_task(f, TELEOPERATED)
+
+
+def autonomous_task(f):
+    """
+    A decorator function that causes the decorated coroutine to run continually
+    when the robot is in Autonomous Mode.
+    """
+    return _gamemode_task(f, AUTONOMOUS)
+
+
+def enabled_task(f):
+    """
+    A decorator function that causes the decorated coroutine to run continually
+    when the robot is Enabled.
+    """
+    return _gamemode_task(f, (AUTONOMOUS, TELEOPERATED))
+
+#Misc Utils
+
+def gamemode_seconds_elapsed(context=None):
+    """
+    :param context: The optional context to use for data retrieval.
+
+    :returns: The seconds elapsed since the start of the current gamemode.
+    """
+    if context is None:
+        context = get_context()
+    data, lock = context.get_interface_data(context_data_key)
+    current_time = wpilib.Timer.getFPGATimestamp()
+    return current_time - data.get("last_change", current_time)
+

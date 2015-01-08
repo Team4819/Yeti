@@ -44,67 +44,13 @@ Or with pip
 Using Yeti
 ----------
 
-Here is a basic example on how to use yeti from robot.py
+Yeti comes with a standard implementation of wpilib.IterativeRobot, which uses the default
+configuration for yeti. You can quickly get started by pluging it into wpilib.run.
 
-.. literalinclude:: ../examples/basic_example/robot.py
+.. literalinclude:: ../../examples/basic_example/robot.py
 
-Yeti is extremely flexible, and can be used in whatever setup you wish. This example uses the full stack of yeti, which consists of the following components.
-
-.. autosummary::
-    yeti.Module
-    yeti.Context
-    yeti.ModuleLoader
-    yeti.ConfigManager
-
-Creating a Context
-^^^^^^^^^^^^^^^^^^
-
-Contexts are essentially containers for modules -- while modules can be used completely
-independently, the rest of Yeti's components rely upon Contexts to mediate access to
-loaded modules.
-
-In this example, we start by initializing a Context, and running it's start() method. The
-start() method causes the Context to spawn its thread and asyncio loop, returning immediately.
-::
-
-   context = yeti.Context()
-   context.start()
-
-Using a ConfigManager
-^^^^^^^^^^^^^^^^^^^^^
-
-Once we have a running context, we need to load some modules. The :class:`ConfigManager` class
-provides a convenient interface to load modules referenced in a config file. After initializing
-the object, we tell it to parse the "mods.conf" config file. ::
-
-       config_manager = yeti.ConfigManager()
-
-       #Parse the config file "mods.conf"
-       config_manager.parse_config("mods.conf")
-
-       #Load modules listed under the "StartupMods" section
-       config_manager.load_startup_mods(context)
-
-.. note:: You can read more about ConfigManager and its matching config files in the :class:`yeti.ConfigManager` documentation.
-
-Gamemode Interface
-^^^^^^^^^^^^^^^^^^
-
-Once we have some modules running, we need a way to let them know what mode the main robot loop is in. One
-way of doing this is with the gamemode interface, which is contained in the "interfaces" sub-package::
-
-    def teleopInit(self):
-        gamemode.set_gamemode(gamemode.TELEOPERATED, context=self.context)
-
-    def disabledInit(self):
-        gamemode.set_gamemode(gamemode.DISABLED, context=self.context)
-
-    def autonomousInit(self):
-        gamemode.set_gamemode(gamemode.AUTONOMOUS, context=self.context)
-
-Here we use gamemode's :meth:`gamemode.set_gamemode()` method to set the game mode, providing it with the context to use.
-
-.. note:: You can read more about Interfaces here: :mod:`yeti.interfaces`.
+.. note:: Advanced users may be interested in building their own Robot implementation to use yeti.
+          You can read about how yeti works from the perspective of IterativeRobot in Building a Robot Implementation
 
 Building Modules
 ----------------
@@ -114,9 +60,9 @@ A Basic Example
 
 Here is a basic example for a drivetrain module. It contains all of the code required for reading values from joysticks, and driving a two-motor chassis.
 
-.. literalinclude:: ../examples/basic_example/modules/arcade_drive.py
+.. literalinclude:: ../../examples/basic_example/modules/arcade_drive.py
 
-.. note:: Here is where asyncio comes to play. You will nearly always want to import asyncio when creating
+.. .. note:: Here is where asyncio comes to play. You will nearly always want to import asyncio when creating
           Modules, you will see why later on.
 
 The Module Object
@@ -156,13 +102,12 @@ Here is the run loop used in the above module example:
 
 ::
 
+    @gamemode.teleop_task
     @asyncio.coroutine
-    def teleop_loop(self):
+    def drive_loop(self):
 
-        #Loop forever
-        while True:
-            #Wait until we are in teleop mode.
-            yield from gamemode.wait_for_teleop()
+        #Loop until end of teleop mode.
+        while gamemode.is_teleop():
 
             #Get the joystick values and drive the motors.
             self.robotdrive.arcadeDrive(-self.joystick.getY(), -self.joystick.getX())
@@ -170,10 +115,11 @@ Here is the run loop used in the above module example:
             #Pause for a moment to let the rest of the code run.
             yield from asyncio.sleep(.05)
 
-Since this is a coroutine, and we don't have any reason for it to stop without the module
-getting unloaded, we use an infinite loop. For each iteration we wait for the robot to
-be in teleoperated mode before setting the RobotDrive values. Before we loop back, we
-sleep for .05 of a second to let the rest of the robot program run.
+The :meth:`gamemode.teleop_task` decorator causes the coroutine to be automatically run whenever
+the robot is in teleoperated mode. When that happens, we use a while loop to continually iterate
+while the robot remains in teleoperated mode. For each iteration we use the joystick inputs to set
+the RobotDrive values. Before we loop back, we sleep for .05 of a second to let the rest of the robot
+program run.
 
 .. note:: "yield from" is used to transition from one coroutine's execution to another.
           "gamemode.wait_for_teleop()" Is a coroutine, supplied by the gamemode interface,
@@ -182,6 +128,61 @@ sleep for .05 of a second to let the rest of the robot program run.
 
 .. note:: Rather than using python's native time.sleep(), or wpilib's Timer.delay(), always
           use asyncio.sleep(), which allows other coroutines to execute.
+
+Aside from using the decorators provided in :mod:`gamemode`, there are a few other ways to run module coroutines:
+
+* By calling "yield from my_coroutine()" from another coroutine. Note that this is a synchronous process.
+* Using the "self.start_coroutine(my_coroutine())" method. This schedules the coroutine, and returns immediately.
+* Using the "yeti.autorun_coroutine()" decorator. This will cause the coroutine to run on module init.
+
+Error Recovery
+^^^^^^^^^^^^^^
+One of the key features of yeti's modular system is how it handles module failure. When using instances of
+ModuleLoader (Default in YetiRobot) you can specify what are called "module fallbacks". If any uncaught
+exception is thrown from within a module, the offending module is immediately unloaded.
+
+However, if that module is referenced in a fallback list, the next entry on the list is immediately loaded in it's
+place. The reasoning behind this is to allow you to build, say, an "AwesomeDrive" module, with all of the fancy
+functionality possible. But if this were to fail, you could have a "BasicDrive" ready to take its place -- allowing
+your robot to cleanly recover from what would have been match-stopping errors.
+
+Config File
+-----------
+
+The default YetiRobot uses the ConfigManager utility to define modules to run at start-up, as well
+as fallback lists for modules.
+
+Syntax
+^^^^^^
+
+Sections are defined by square brackets, as seen in the example. Other than the StartupMods section,
+each section defines a fallback list. For example, see the drivetrain section in the example config
+file shown below. It specifies two modules for the fallback list, the one found in modules/awesome_drive.py,
+and the one found in modules/basic_drive.py. With this setup, whenever you want to load a drivetrain module,
+you can now tell yeti to load "drivetrain" and it will grab the first entry on this list.
+
+The StartupMods section is special. Rather than defining a fallback list, it lists modules to load upon program
+startup.
+
+::
+
+    [StartupMods]
+    drivetrain
+    elevator
+    modules.autonomous
+
+    [drivetrain]
+    modules.awesome_drive
+    modules.basic_drive
+
+    [elevator]
+    modules.simple_elevator
+    modules.pid_elevator
+
+
+    #This is a comment
+
+YetiRobot expects this file to be found at "mods.conf" in the same directory as robotpy.
 
 Yeti WebUI
 ----------
@@ -193,4 +194,9 @@ To run the webui, set "yeti.preloaded_modules.webui" to load from your module
 config file. The http server will start up on port 8080, and you should be able
 to reach it at <computer_ip>:8080/index.html .
 
-.. image:: images/WebUI.png
+.. image:: ../images/WebUI.png
+
+.. toctree::
+    :hidden:
+
+    building_robot_file

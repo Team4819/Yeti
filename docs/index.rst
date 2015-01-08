@@ -14,7 +14,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
-   getting_started
+   using_yeti/index
    yeti_api
 
 Indices and tables

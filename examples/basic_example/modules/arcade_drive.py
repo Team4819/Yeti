@@ -23,16 +23,12 @@ class ArcadeDrive(yeti.Module):
         self.robotdrive = wpilib.RobotDrive(0, 1)
         self.referee.watch(self.robotdrive)
 
-        #Set the teleop_loop to run.
-        self.start_coroutine(self.teleop_loop())
-
+    @gamemode.teleop_task
     @asyncio.coroutine
-    def teleop_loop(self):
+    def drive_loop(self):
 
-        #Loop forever
-        while True:
-            #Wait until we are in teleop mode.
-            yield from gamemode.wait_for_teleop()
+        #Loop until end of teleop mode.
+        while gamemode.is_teleop():
 
             #Get the joystick values and drive the motors.
             self.robotdrive.arcadeDrive(-self.joystick.getY(), -self.joystick.getX())
