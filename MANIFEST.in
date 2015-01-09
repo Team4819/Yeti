@@ -1,2 +1,2 @@
 include LICENSE.txt
-include yeti/*
+recursive-include yeti/preloaded_modules *

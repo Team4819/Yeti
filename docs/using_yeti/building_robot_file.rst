@@ -7,7 +7,7 @@ own IterativeRobot implementation.
 
 For an example, here is yeti's StandardRobot
 
-.. literalinclude:: ../../yeti/robots/standard_robot.py
+.. literalinclude:: ../../yeti/robots/yeti_robot.py
 
 Yeti is extremely flexible, and can be used in whatever setup you wish. This example uses the full
 stack of yeti, which consists of the following components.
