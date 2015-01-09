@@ -1,6 +1,7 @@
 import threading
 import asyncio
 import logging
+import traceback
 
 from .hook_server import HookServer
 
@@ -52,7 +53,7 @@ class Context(HookServer):
         try:
             yield from coro
         except Exception as e:
-            log.error(e)
+            self.logger.error(str(e) + "" + traceback.format_exc())
 
     def get_event_loop(self):
         """

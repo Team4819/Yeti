@@ -2,6 +2,7 @@ import yeti
 import asyncio
 import os
 import json
+import traceback
 from aiohttp import web
 
 class WebUI(yeti.Module):
@@ -40,7 +41,7 @@ class WebUI(yeti.Module):
             res = {"status": 0, "message": msg}
         except Exception as e:
             res = {"status": -1, "message": str(e)}
-            self.logger.error(str(e))
+            self.logger.error(str(e) + "\n" + traceback.format_exc())
 
         text = json.dumps(res, allow_nan=False)
         return web.Response(body=text.encode("utf-8"))
@@ -48,7 +49,7 @@ class WebUI(yeti.Module):
     @asyncio.coroutine
     def load_command(self, target):
         if hasattr(self.context, "config_manager"):
-            self.context.config_manager.load_module(self.context, target)
+            self.context.config_manager.load_module(target, self.context)
         else:
             loader = yeti.ModuleLoader()
             loader.set_context(self.context)

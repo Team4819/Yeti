@@ -3,6 +3,10 @@
 from os.path import dirname, exists, join
 import sys, subprocess
 from setuptools import setup, find_packages
+from distutils.command.install import INSTALL_SCHEMES
+
+for scheme in INSTALL_SCHEMES.values():
+    scheme['data'] = scheme['purelib']
 
 setup_dir = dirname(__file__)
 base_package = 'yeti'
@@ -42,6 +46,7 @@ setup(
     url='https://github.com/Team4819/yeti',
     keywords='frc first robotics asyncio',
     packages=find_packages(),
+    include_package_data=True,
     license="BSD License",
     classifiers=[
         "Development Status :: 3 - Alpha",
