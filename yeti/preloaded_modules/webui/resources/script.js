@@ -1,10 +1,45 @@
 
+var remote_msg_last_displayed = -1
+
+var first_data = true
 
 function onData(data){
+    if(no_server){
+        clear_message(noresponse_msgid)
+        display_message("Connection Regained.", "info", 4000)
+        no_server = false
+    }
+
+    document.title = "Yeti Dashboard - version " + data.version
+    $(".yeti-version").text("Yeti Runtime Version: " + data.version + ".")
     $(".mod-panel").remove()
     for(var i = 0; i < data.modules.length; i++){
         make_mod_panel(data.modules[i])
     }
+    new_rmld = remote_msg_last_displayed
+    if(new_rmld > data.next_mid){
+        new_rmld = data.next_mid - 1
+    }
+    for(var i = 0; i < data.messages.length; i++){
+        if(data.messages[i].id > remote_msg_last_displayed){
+            if(!first_data){
+                console.log(data.messages[i].id)
+                if(data.messages[i].level == "INFO"){
+                    time = 3000
+                }
+                else{
+                    time = 10000
+                }
+                display_message(data.messages[i].message.replace(/(?:\r\n|\r|\n)/g, '<br />'), data.messages[i].level, time)
+            }
+            new_rmld = data.messages[i].id
+        }
+    }
+    remote_msg_last_displayed = new_rmld
+    if(first_data){
+        first_data = false
+    }
+
 }
 
 var panel_html = "\
@@ -71,7 +106,8 @@ function command_loadconf(confname){
 
 function send_command(command, target){
     data = { command: command, target: target }
-    $.post("/api/command", data, handle_command_response)
+    $.post("/api/command", data)
+    //$.post("/api/command", data, handle_command_response)
     setTimeout(getData, 200);
 }
 
@@ -85,34 +121,39 @@ function handle_command_response(json){
     }
 }
 
+
 var msg_html = "\
 <div class='alert dash_alert' role='alert'>\
 </div>\
 "
 
 var current_msgbox_id = 0
-function display_message(message, status){
+function display_message(message, status, timeout){
+    msg_id = current_msgbox_id
+    current_msgbox_id += 1
     $("#msg_bar").append(msg_html)
     msg_box = $(".dash_alert").last()
     msg_box.html(message)
-    msg_box.addClass("dash_alert_" + current_msgbox_id)
+    msg_box.addClass("dash_alert_" + msg_id)
+    status = status.toLowerCase()
 
     if(status == "error"){
         msg_box.addClass("alert-danger")
     }
-    else if(status == "warn"){
+    else if(status == "warning"){
         msg_box.addClass("alert-warning")
     }
-    else if(status == "success"){
+    else if(status == "info"){
         msg_box.addClass("alert-success")
     }
     else{
         msg_box.addClass("alert-primary")
     }
 
-    setTimeout('clear_message(' + current_msgbox_id + ')', 3000)
-    current_msgbox_id += 1
-    //alert(message)
+    if(timeout > 0){
+        setTimeout('clear_message(' + msg_id + ')', timeout)
+    }
+    return msg_id
 }
 
 function clear_message(id){
@@ -124,10 +165,16 @@ function getDataLoop() {
     setTimeout(getDataLoop, 3000);
 }
 
+var noresponse_msgid = -1
+var no_server
 function getData(){
     $.getJSON("/api/json", onData)
     .fail(function(){
-       display_message("No response from server.", "warn")
+        if(!no_server){
+            noresponse_msgid = display_message("Error: Connection Lost.", "error", -1)
+            document.title = "Yeti Dashboard - CONNECTION LOST"
+        }
+        no_server = true
     });
 }
 

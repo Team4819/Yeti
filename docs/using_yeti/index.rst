@@ -44,8 +44,8 @@ Or with pip
 Using Yeti
 ----------
 
-Yeti comes with a standard implementation of wpilib.IterativeRobot, which uses the default
-configuration for yeti. You can quickly get started by pluging it into wpilib.run.
+Yeti comes with a base robot class :class:`yeti.robots.YetiRobot` you can use to quickly start using yeti. To start,
+add the following code to your robot.py.
 
 .. literalinclude:: ../../examples/basic_example/robot.py
 
@@ -183,6 +183,21 @@ startup.
     #This is a comment
 
 YetiRobot expects this file to be found at "mods.conf" in the same directory as robotpy.
+
+Deploying Code
+--------------
+RobotPy code making use of Yeti can be deployed the same as any RobotPy application. By running:
+::
+
+    python3 robot.py deploy
+
+As with any RobotPy application, this will stop and remove any currently running application, then upload and re-start
+your new one. Sometimes, in an application such as yeti, this is unnecessary. When you only want to upload changes to
+modules, you can use pyfrc's "--in-place" flag. You can then use the WebUI to reload just the modules you modified --
+without even changing robot game mode!
+::
+
+    python3 robot.py deploy --in-place
 
 Yeti WebUI
 ----------

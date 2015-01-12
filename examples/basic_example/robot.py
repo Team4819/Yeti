@@ -1,5 +1,13 @@
+#!/usr/bin/env python3
+
 import wpilib
-import yeti.robots
+from os.path import dirname, abspath
+from yeti.robots import YetiRobot
+
+
+class MyRobot(YetiRobot):
+    #Tell YetiRobot to look for mods.conf in this directory.
+    config_dir = abspath(dirname(__file__))
 
 if __name__ == "__main__":
-    wpilib.run(yeti.robots.YetiRobot)
+    wpilib.run(MyRobot)

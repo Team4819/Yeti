@@ -53,7 +53,7 @@ class Context(HookServer):
         try:
             yield from coro
         except Exception as e:
-            self.logger.error(str(e) + "" + traceback.format_exc())
+            self.logger.error(str(e) + "\n" + traceback.format_exc())
 
     def get_event_loop(self):
         """

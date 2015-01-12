@@ -1,9 +1,25 @@
 import yeti
+import time
 import asyncio
 import os
 import json
 import traceback
+import logging
 from aiohttp import web
+
+try:
+    from yeti.version import __version__
+except:
+    __version__ = "master"
+
+class WebUILoggerHandler(logging.Handler):
+
+    def __init__(self, handler_func):
+        self.handler_func = handler_func
+        super().__init__()
+
+    def emit(self, record):
+        self.handler_func(record)
 
 class WebUI(yeti.Module):
     """
@@ -14,10 +30,39 @@ class WebUI(yeti.Module):
         self.context = yeti.get_context()
         self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
         self.start_coroutine(self.init_server())
+        self.yeti_logger = logging.getLogger("yeti")
+        def er_hdl(msg):
+            self.context.thread_coroutine(self.error_handler(msg))
+        logger_handler = WebUILoggerHandler(er_hdl)
+        self.yeti_logger.addHandler(logger_handler)
+
+        self.messages = list()
+
+    next_error_id = 0
+
+
+    @asyncio.coroutine
+    def error_handler(self, message):
+        yield from self.clean_messages()
+        message_data = {"time": time.monotonic(), "message": message.getMessage(), "level": message.levelname, "id": self.next_error_id}
+        self.next_error_id += 1
+        self.messages.append(message_data)
+
+    @asyncio.coroutine
+    def clean_messages(self):
+        #Clean all timed-out messages
+        current_time = time.monotonic()
+        for message in self.messages[:]:
+            if message["time"] + 10 < current_time:
+                self.messages.remove(message)
 
     @asyncio.coroutine
     def json_handler(self, request):
         data_structure = dict()
+        data_structure["version"] = __version__
+        yield from self.clean_messages()
+        data_structure["messages"] = self.messages
+        data_structure["next_mid"] = self.next_error_id
         data_structure["modules"] = list()
         for modname in self.context.loaded_modules:
             mod_object = self.context.loaded_modules[modname]
@@ -37,13 +82,11 @@ class WebUI(yeti.Module):
         commands = {"load": self.load_command, "load_config": self.load_config, "unload": self.unload_command, "reload": self.reload_command}
         data = yield from request.post()
         try:
-            msg = yield from commands[data["command"]](data["target"])
-            res = {"status": 0, "message": msg}
+            text = yield from commands[data["command"]](data["target"])
         except Exception as e:
-            res = {"status": -1, "message": str(e)}
             self.logger.error(str(e) + "\n" + traceback.format_exc())
+            text = str(e)
 
-        text = json.dumps(res, allow_nan=False)
         return web.Response(body=text.encode("utf-8"))
 
     @asyncio.coroutine
@@ -81,12 +124,18 @@ class WebUI(yeti.Module):
             self.context.config_manager = yeti.ConfigManager()
         self.context.config_manager.parse_config(path)
         self.context.config_manager.load_startup_mods(self.context)
+        return "Successfully reloaded config file " + path
+
+    @asyncio.coroutine
+    def forward_request(self, request):
+        return web.HTTPFound("/index.html")
 
     @asyncio.coroutine
     def init_server(self):
         app = web.Application()
         app.router.add_route("GET", "/api/json", self.json_handler)
         app.router.add_route("POST", "/api/command", self.command_handler)
+        app.router.add_route("GET", "/", self.forward_request)
         app.router.add_static("/", self.file_root)
         self.srv = yield from self.event_loop.create_server(app.make_handler(), port=8080)
 

@@ -48,7 +48,7 @@ class Module(HookServer):
         except Exception as e:
             self.call_hook("exception", e)
 
-        self.logger.info("Finished module init.")
+        self.logger.info("Loaded Module {}.".format(self.name))
 
     def stop(self):
         """
@@ -59,7 +59,7 @@ class Module(HookServer):
         for task in self.tasks:
             task.cancel()
         self.event_loop = None
-        self.logger.info("Finished module deinit.")
+        self.logger.info("Unloaded Module {}".format(self.name))
 
     def start_coroutine(self, coroutine):
         """

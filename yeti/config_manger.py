@@ -49,10 +49,12 @@ class ConfigManager(object):
 
         if self.config_structure is None:
             fallback_list = [name]
+            fallback_index = 0
 
         #is it a subsystem name?
         elif name in self.config_structure:
             fallback_list = self.config_structure[name]
+            fallback_index = 0
 
         #no? must be a filename then.
         else:
@@ -61,15 +63,18 @@ class ConfigManager(object):
                 if subsystem_config != self._STARTUP_MOD_SECTION and name in self.config_structure[subsystem_config]:
                     #We found it! set the fallback list
                     fallback_list = self.config_structure[subsystem_config]
+                    fallback_index = fallback_list.index(name)
                     break
 
             #If we still don't have a fallback list, just make one up and go!
             else:
                 fallback_list = [name]
+                fallback_index = 0
 
         module_loader = ModuleLoader()
         module_loader.set_context(context)
         module_loader.fallback_list = fallback_list
+        module_loader.fallback_index = fallback_index
         module_loader.load()
         self.module_loaders[name] = module_loader
         return module_loader

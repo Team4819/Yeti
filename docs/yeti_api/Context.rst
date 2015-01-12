@@ -9,13 +9,6 @@ Context
 
     Contexts also provide a system for inter-module interfaces to store data relevant to that module group. See :py:meth:`Context.get_interface_data()`
 
-    As with most classes in yeti, Contexts inherit from :py:class:`yeti.hook_server.HookServer`, and can be extended with the following hooks.
-
-    - `context_start`
-    - `context_stop`
-    - `module_load`
-    - `module_unload`
-
     .. autofunction:: yeti.set_context
 
     .. autofunction:: yeti.get_context

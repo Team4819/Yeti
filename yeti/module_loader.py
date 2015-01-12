@@ -130,7 +130,7 @@ class ModuleLoader(object):
             file_to_load = self.fallback_list[self.fallback_index]
             try:
 
-                logger.info("Loading " + file_to_load)
+                logger.debug("Loading " + file_to_load)
 
                 #Reload the module if it is already loaded, otherwise import it anew..
                 if file_to_load in sys.modules:
@@ -183,7 +183,6 @@ class ModuleLoader(object):
         if self.module_object is not None:
             yield from self.module_context.unload_module_coroutine(self.module_name)
             self.module_object = None
-            self.logger.info("unloaded module " + self.module_path)
 
     def unload(self):
         """Schedules :meth:`unload_coroutine` to be run."""

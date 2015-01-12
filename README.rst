@@ -15,6 +15,11 @@ Documentation
 
 All Yeti documentation can be found at http://yeti-robotics-runtime.readthedocs.org
 
+Examples
+========
+Aside from the example application found in this repository, you can see real robot code in
+Team 4819's 2015 Python Codebase, found here: https://github.com/Team4819/2015-Python-Codebase
+
 License
 =======
 
