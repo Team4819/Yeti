@@ -135,6 +135,11 @@ Aside from using the decorators provided in :mod:`gamemode`, there are a few oth
 * Using the "self.start_coroutine(my_coroutine())" method. This schedules the coroutine, and returns immediately.
 * Using the "yeti.autorun_coroutine()" decorator. This will cause the coroutine to run on module init.
 
+Module Communication
+^^^^^^^^^^^^^^^^^^^^
+
+All inter-module communication is handled by the :mod:`yeti.interfaces` library. You can read about it in the yeti API documentation.
+
 Error Recovery
 ^^^^^^^^^^^^^^
 One of the key features of yeti's modular system is how it handles module failure. When using instances of
