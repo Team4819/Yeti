@@ -57,7 +57,7 @@ setup(
     include_package_data=True,
     license="BSD License",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "License :: OSI Approved :: BSD License",
