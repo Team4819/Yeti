@@ -11,7 +11,7 @@ function onData(data){
     }
 
     document.title = "Yeti Dashboard - version " + data.version
-    $(".yeti-version").text("Yeti Runtime Version: " + data.version + ".")
+    $(".yeti-version").text("Yeti Runtime Version: " + data.version)
     $(".mod-panel").remove()
     for(var i = 0; i < data.modules.length; i++){
         make_mod_panel(data.modules[i])
