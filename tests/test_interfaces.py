@@ -33,3 +33,33 @@ def test_datastream_events(yeti, context):
     assert not ev.is_set()
     ds.push({"message": "Hi there!"})
     assert ev.is_set()
+
+def test_remote_coroutines(yeti, context):
+    from yeti.interfaces import remote_coroutines
+    from yeti.module import Module
+    from yeti import autorun_coroutine
+    import asyncio
+
+    class ModA(Module):
+        def module_init(self):
+            self.msg = ""
+
+        @remote_coroutines.public_coroutine
+        @asyncio.coroutine
+        def setter(self, msg):
+            self.msg = msg
+
+    class ModB(Module):
+        @autorun_coroutine
+        @asyncio.coroutine
+        def caller(self):
+            yield from remote_coroutines.call_public_coroutine("setter", "Hi!")
+            self.event_loop.stop()
+
+    mymoda = ModA()
+    mymodb = ModB()
+    context.load_module(mymoda)
+    context.load_module(mymodb)
+    context.run_forever()
+    assert mymoda.msg == "Hi!"
+

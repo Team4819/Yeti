@@ -19,9 +19,11 @@ class Module(HookServer):
         self.name = self.__class__.__name__
         self.logger = logging.getLogger('yeti.' + self.name)
         self.tasks = list()
+        self.tagged_coroutines = dict()
         self.add_hook("end_task", self._finish_task)
         self.add_hook("init", self.module_init)
-        self.add_hook("init", self.autorun_coroutines)
+        self.add_hook("init", self.classify_coroutines)
+        self.add_hook("init", self.autostart_coroutines)
         self.add_hook("deinit", self.module_deinit)
 
     def module_init(self):
@@ -75,10 +77,17 @@ class Module(HookServer):
         self.call_hook("add_task", task)
         self.tasks.append(task)
 
-    def autorun_coroutines(self):
+    def classify_coroutines(self):
         for name, obj in inspect.getmembers(self):
-            if hasattr(obj, "autorun") and obj.autorun:
-                self.start_coroutine(obj())
+            tags = list_tags(obj)
+            for tag in tags:
+                if tag not in self.tagged_coroutines:
+                    self.tagged_coroutines[tag] = list()
+                self.tagged_coroutines[tag].append(obj)
+
+    def autostart_coroutines(self):
+        for coro in self.tagged_coroutines.get("autorun", []):
+            self.start_coroutine(coro())
 
     def _finish_task(self, fut):
         try:
@@ -88,9 +97,42 @@ class Module(HookServer):
         except asyncio.CancelledError:
             pass
 
+def add_tag(obj, tag_name):
+    """
+    A helper function that adds a classification tag to the given object
+
+    :param obj: The object to add a classification to.
+    :param tag_name: The name of tag to add.
+
+    :returns: obj with a classification tag.
+    """
+
+    if not hasattr(obj, "tags"):
+        obj.tags = list()
+    if tag_name not in obj.tags:
+        obj.tags.append(tag_name)
+    return obj
+
+def list_tags(obj):
+    """
+    :returns: The list of tags in a given object.
+    """
+    if hasattr(obj, "tags"):
+        return obj.tags[:]
+    else:
+        return []
+
+def copy_tags(source, target):
+    """
+    A helper function that copies all tags from one object to another.
+    """
+    if not hasattr(target, "tags"):
+        target.tags = list()
+    for tag in list_tags(source):
+        add_tag(target, tag)
+
 def autorun_coroutine(func):
     """
     A decorator that sets the coroutine to schedule automatically upon module init.
     """
-    func.autorun = True
-    return func
+    return add_tag(func, "autorun")

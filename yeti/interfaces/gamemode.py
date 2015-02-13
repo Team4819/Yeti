@@ -4,6 +4,7 @@ gamemode between modules.
 """
 
 from ..context import get_context
+from ..module import add_tag, copy_tags
 import asyncio
 import wpilib
 
@@ -189,7 +190,8 @@ def _gamemode_task(f, gamemodes):
             yield from f(*args, **kwargs)
             #Give the rest of the robot a moment to breath before looping
             yield from asyncio.sleep(.05)
-    wrapper_func.autorun = True
+    copy_tags(f, wrapper_func)
+    add_tag(wrapper_func, "autorun")
     return wrapper_func
 
 

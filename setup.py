@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
 from os.path import dirname, exists, join
-import sys, subprocess
+import sys
+import subprocess
 from setuptools import setup, find_packages
-from distutils.command.install import INSTALL_SCHEMES
-
-for scheme in INSTALL_SCHEMES.values():
-    scheme['data'] = scheme['purelib']
 
 setup_dir = dirname(__file__)
 base_package = 'yeti'
