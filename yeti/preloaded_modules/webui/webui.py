@@ -137,9 +137,9 @@ class WebUI(yeti.Module):
         app.router.add_route("POST", "/api/command", self.command_handler)
         app.router.add_route("GET", "/", self.forward_request)
         app.router.add_static("/", self.file_root)
-        self.srv = yield from self.event_loop.create_server(app.make_handler(), port=8080)
+        self.srv = yield from self.event_loop.create_server(app.make_handler(), port=5801)
 
-        self.logger.info("Yeti WebUI started at  http://127.0.0.1:8080/index.html")
+        self.logger.info("Yeti WebUI started at  http://127.0.0.1:5801/index.html")
 
     def module_deinit(self):
         self.srv.close()
