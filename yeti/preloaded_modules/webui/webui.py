@@ -27,6 +27,7 @@ class WebUI(yeti.Module):
     """
 
     def module_init(self):
+        logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
         self.context = yeti.get_context()
         self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
         self.start_coroutine(self.init_server())

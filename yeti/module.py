@@ -19,10 +19,10 @@ class Module(HookServer):
         self.name = self.__class__.__name__
         self.logger = logging.getLogger('yeti.' + self.name)
         self.tasks = list()
-        self.tagged_coroutines = dict()
+        self.tagged_objects = dict()
         self.add_hook("end_task", self._finish_task)
         self.add_hook("init", self.module_init)
-        self.add_hook("init", self.classify_coroutines)
+        self.add_hook("init", self.classify_objects)
         self.add_hook("init", self.autostart_coroutines)
         self.add_hook("deinit", self.module_deinit)
 
@@ -77,16 +77,16 @@ class Module(HookServer):
         self.call_hook("add_task", task)
         self.tasks.append(task)
 
-    def classify_coroutines(self):
+    def classify_objects(self):
         for name, obj in inspect.getmembers(self):
             tags = list_tags(obj)
             for tag in tags:
-                if tag not in self.tagged_coroutines:
-                    self.tagged_coroutines[tag] = list()
-                self.tagged_coroutines[tag].append(obj)
+                if tag not in self.tagged_objects:
+                    self.tagged_objects[tag] = list()
+                self.tagged_objects[tag].append(obj)
 
     def autostart_coroutines(self):
-        for coro in self.tagged_coroutines.get("autorun", []):
+        for coro in self.tagged_objects.get("autorun", []):
             self.start_coroutine(coro())
 
     def _finish_task(self, fut):

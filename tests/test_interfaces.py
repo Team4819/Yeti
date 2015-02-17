@@ -35,7 +35,7 @@ def test_datastream_events(yeti, context):
     assert ev.is_set()
 
 def test_remote_coroutines(yeti, context):
-    from yeti.interfaces import remote_coroutines
+    from yeti.interfaces import remote_methods
     from yeti.module import Module
     from yeti import autorun_coroutine
     import asyncio
@@ -44,7 +44,7 @@ def test_remote_coroutines(yeti, context):
         def module_init(self):
             self.msg = ""
 
-        @remote_coroutines.public_coroutine
+        @remote_methods.public_coroutine
         @asyncio.coroutine
         def setter(self, msg):
             self.msg = msg
@@ -53,7 +53,7 @@ def test_remote_coroutines(yeti, context):
         @autorun_coroutine
         @asyncio.coroutine
         def caller(self):
-            yield from remote_coroutines.call_public_coroutine("setter", "Hi!")
+            yield from remote_methods.call_public_coroutine("setter", "Hi!")
             self.event_loop.stop()
 
     mymoda = ModA()
