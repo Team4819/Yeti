@@ -97,7 +97,7 @@ class Module(HookServer):
         except asyncio.CancelledError:
             pass
 
-def add_tag(obj, tag_name):
+def add_tag(obj, tag_name, tag_data=True):
     """
     A helper function that adds a classification tag to the given object
 
@@ -108,28 +108,26 @@ def add_tag(obj, tag_name):
     """
 
     if not hasattr(obj, "tags"):
-        obj.tags = list()
-    if tag_name not in obj.tags:
-        obj.tags.append(tag_name)
+        obj.tags = {}
+    obj.tags[tag_name] = tag_data
     return obj
 
 def list_tags(obj):
     """
-    :returns: The list of tags in a given object.
+    :returns: The dictionary of tags in a given object.
     """
     if hasattr(obj, "tags"):
-        return obj.tags[:]
+        return obj.tags
     else:
-        return []
+        return {}
 
 def copy_tags(source, target):
     """
     A helper function that copies all tags from one object to another.
     """
     if not hasattr(target, "tags"):
-        target.tags = list()
-    for tag in list_tags(source):
-        add_tag(target, tag)
+        target.tags = {}
+    target.tags.update(list_tags(source))
 
 def autorun_coroutine(func):
     """
