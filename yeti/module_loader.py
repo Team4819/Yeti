@@ -163,7 +163,7 @@ class ModuleLoader(object):
                 self.module_object.loader = self
 
                 #Add module to the current context:
-                yield from self.module_context.load_module_coroutine(self.module_object)
+                yield from self.module_context.load_module_instance_coroutine(self.module_object)
 
                 #Yay, we must have been successful!
                 break

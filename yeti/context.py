@@ -119,19 +119,19 @@ class Context(HookServer):
         self.call_hook("context_stop", self)
         self._event_loop.stop()
 
-    def load_module(self, module):
+    def load_module_instance(self, module):
         """
-        Schedules :meth:`.load_module_coroutine` to be run in the context's event loop.
+        Schedules :meth:`.load_module_instance_coroutine` to be run in the context's event loop.
         This method is thread-safe.
 
         :param module: The module object to load into the context.
         """
-        self.thread_coroutine(self.load_module_coroutine(module))
+        self.thread_coroutine(self.load_module_instance_coroutine(module))
 
     @asyncio.coroutine
-    def load_module_coroutine(self, module):
+    def load_module_instance_coroutine(self, module):
         """
-        Loads module into the context, and errors if we already have one with that name. Triggers :meth:`.start()`.
+        Loads module instance into the context, and errors if we already have one with that name. Triggers :meth:`.start()`.
 
         :param module: The module object to load into the context.
         """

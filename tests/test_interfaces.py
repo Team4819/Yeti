@@ -68,8 +68,8 @@ def test_remote_coroutines(yeti, context):
 
     mymoda = ModA()
     mymodb = ModB()
-    context.load_module(mymoda)
-    context.load_module(mymodb)
+    context.load_module_instance(mymoda)
+    context.load_module_instance(mymodb)
     context.run_forever()
     assert mymoda.msg == "Hi There!"
 

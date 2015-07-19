@@ -8,7 +8,7 @@ def test_context_run(yeti, context):
             self.event_loop.stop()
 
     module = SetterMod()
-    context.load_module(module)
+    context.load_module_instance(module)
     assert module.message == "..."
     context.run_forever()
     assert module.message == "Hi!"

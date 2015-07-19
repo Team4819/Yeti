@@ -3,6 +3,7 @@ import logging
 import functools
 import inspect
 
+from .context import get_context
 from .hook_server import HookServer
 
 
@@ -14,17 +15,33 @@ class Module(HookServer):
     name = "module"
     event_loop = None
 
-    def __init__(self):
+    def __init__(self, context=None):
         super().__init__()
+
+        # Get context if none provided
+        if context is None:
+            context = get_context()
+        self.context = context
+
+        # Get class name and logger
         self.name = self.__class__.__name__
         self.logger = logging.getLogger('yeti.' + self.name)
-        self.tasks = list()
+
+        # Check context for required running modules
+        running_modules = context.get_modules()
+        for module_id in self.required_modules():
+            if module_id not in running_modules:
+                raise ValueError("Required module {} is not present in the current context.")
+
+        # Classify tagged objects into the tagged_objects dict
         self.tagged_objects = dict()
+        self.classify_objects()
+
+        self.tasks = list()
         self.add_hook("end_task", self._finish_task)
-        self.add_hook("init", self.module_init)
-        self.add_hook("init", self.classify_objects)
-        self.add_hook("init", self.autostart_coroutines)
-        self.add_hook("deinit", self.module_deinit)
+
+    def required_modules(self):
+        return []
 
     def module_init(self):
         """A default `module_init` hook used for initializing the module, and starting any coroutines."""
@@ -34,23 +51,20 @@ class Module(HookServer):
         """A default `module_deinit` hook used for freeing any used resources."""
         pass
 
-    def start(self, loop=None):
+    def start(self):
         """
         Start module operation. It configures the asyncio event loop to use for runtime, and
         calls the `module_init` hook to get things running.
-
-        :param loop: An optional event loop to use for module run.
         """
-        if loop is None:
-            self.event_loop = asyncio.get_event_loop()
-        else:
-            self.event_loop = loop
+        self.event_loop = self.context.get_event_loop()
         try:
+            self.module_init()
+            self.autostart_coroutines()
             self.call_hook("init", supress_exceptions=False)
         except Exception as e:
             self.call_hook("exception", e)
 
-        self.logger.info("Loaded Module {}.".format(self.name))
+        self.logger.info("Started Module {}.".format(self.name))
 
     def stop(self):
         """
@@ -58,10 +72,11 @@ class Module(HookServer):
         hook to stop everything
         """
         self.call_hook("deinit")
+        self.module_deinit()
         for task in self.tasks:
             task.cancel()
         self.event_loop = None
-        self.logger.info("Unloaded Module {}".format(self.name))
+        self.logger.info("Stopped Module {}".format(self.name))
 
     def start_coroutine(self, coroutine):
         """
