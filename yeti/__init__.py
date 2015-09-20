@@ -1,3 +1,6 @@
 from .engine import *
 from .module import *
-from .robot import *
+try:
+    from .robot import *
+except:
+    pass
