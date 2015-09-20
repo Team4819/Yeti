@@ -1,0 +1,6 @@
+enabled:
+  - webui
+  - gameclock
+
+module_dirs:
+  - yeti.modules

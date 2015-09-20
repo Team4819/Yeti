@@ -2,11 +2,12 @@
 
 import wpilib
 from os.path import dirname, abspath
-from yeti.robots import YetiRobot
+from yeti import YetiRobot
 
 
 class MyRobot(YetiRobot):
-    #Tell YetiRobot to look for mods.conf in this directory.
+
+    # Tell YetiRobot to look for yeti.yml in this directory.
     config_dir = abspath(dirname(__file__))
 
 if __name__ == "__main__":

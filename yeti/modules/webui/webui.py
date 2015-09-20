@@ -28,19 +28,17 @@ class WebUI(yeti.Module):
 
     def module_init(self):
         logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
-        self.context = yeti.get_context()
         self.file_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
         self.start_coroutine(self.init_server())
         self.yeti_logger = logging.getLogger("yeti")
         def er_hdl(msg):
-            self.context.thread_coroutine(self.error_handler(msg))
+            self.engine.thread_coroutine(self.error_handler(msg))
         logger_handler = WebUILoggerHandler(er_hdl)
         self.yeti_logger.addHandler(logger_handler)
 
         self.messages = list()
 
     next_error_id = 0
-
 
     @asyncio.coroutine
     def error_handler(self, message):
@@ -51,7 +49,7 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def clean_messages(self):
-        #Clean all timed-out messages
+        # Clean all timed-out messages
         current_time = time.monotonic()
         for message in self.messages[:]:
             if message["time"] + 10 < current_time:
@@ -65,15 +63,16 @@ class WebUI(yeti.Module):
         data_structure["messages"] = self.messages
         data_structure["next_mid"] = self.next_error_id
         data_structure["modules"] = list()
-        for modname in self.context.loaded_modules:
-            mod_object = self.context.loaded_modules[modname]
+        for mod_path in self.engine.running_modules:
+            mod_object = self.engine.running_modules[mod_path]
+            if not mod_object.alive:
+                continue
             mod_data = dict()
-            mod_data["subsystem"] = modname
+            mod_data["subsystem"] = mod_path
             mod_data["description"] = mod_object.__doc__
-            if hasattr(mod_object, "loader"):
-                mod_data["filename"] = mod_object.loader.module_path
-                mod_data["status"] = "Loaded"
-                mod_data["fallbacks"] = mod_object.loader.fallback_list
+            mod_data["filename"] = mod_path
+            mod_data["status"] = "Running"
+            mod_data["fallbacks"] = []
             data_structure["modules"].append(mod_data)
         text = json.dumps(data_structure, allow_nan=False)
         return web.Response(body=text.encode("utf-8"))
@@ -92,39 +91,28 @@ class WebUI(yeti.Module):
 
     @asyncio.coroutine
     def load_command(self, target):
-        if hasattr(self.context, "config_manager"):
-            self.context.config_manager.load_module_instance(target, self.context)
-        else:
-            loader = yeti.ModuleLoader()
-            loader.set_context(self.context)
-            yield from loader.load_coroutine(target)
+        yield from self.engine.start_module(target)
         return "Successfully loaded " + target
 
     @asyncio.coroutine
     def unload_command(self, target):
-        yield from self.context.unload_module_coroutine(target)
+        yield from self.engine.stop_module(target)
         return "Successfully unloaded " + target
 
     @asyncio.coroutine
     def reload_command(self, target):
-        all_mods = self.context.get_modules()
+        all_mods = self.engine.running_modules.copy()
         if target == "all":
             target_mods = [all_mods[mod] for mod in all_mods]
         else:
             target_mods = [all_mods[target], ]
         for mod in target_mods:
-            if hasattr(mod, "loader"):
-                yield from mod.loader.reload_coroutine()
+            yield from self.engine.reload_module(mod)
         return "Successfully reloaded " + target
 
     @asyncio.coroutine
     def load_config(self, path):
-        for module in self.context.get_modules():
-            yield from self.context.unload_module_coroutine(module)
-        if not hasattr(self.context, "config_manager"):
-            self.context.config_manager = yeti.ConfigManager()
-        self.context.config_manager.parse_config(path)
-        self.context.config_manager.load_startup_mods(self.context)
+        self.engine.load_config(path)
         return "Successfully reloaded config file " + path
 
     @asyncio.coroutine
@@ -138,7 +126,7 @@ class WebUI(yeti.Module):
         app.router.add_route("POST", "/api/command", self.command_handler)
         app.router.add_route("GET", "/", self.forward_request)
         app.router.add_static("/", self.file_root)
-        self.srv = yield from self.event_loop.create_server(app.make_handler(), port=5800)
+        self.srv = yield from self.engine.event_loop.create_server(app.make_handler(), port=5800)
 
         self.logger.info("Yeti WebUI started at  http://127.0.0.1:5800/index.html")
 

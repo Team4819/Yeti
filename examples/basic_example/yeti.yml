@@ -1,0 +1,9 @@
+enabled:
+    - drivetrain
+
+module_dirs:
+    - modules
+
+module_sets:
+    drivetrain:
+      - arcade_drive

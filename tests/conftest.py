@@ -9,8 +9,8 @@ def yeti():
     return yeti
 
 @pytest.fixture(scope="function")
-def context(yeti):
-    return yeti.Context()
+def engine(yeti):
+    return yeti.Engine()
 
 @pytest.fixture(scope="function")
 def resources_dir():

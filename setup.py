@@ -50,7 +50,7 @@ setup(
     url='https://github.com/Team4819/yeti',
     keywords='frc first robotics asyncio',
     packages=find_packages(),
-    install_requires=["aiohttp", ],
+    install_requires=["aiohttp", "pyyaml"],
     include_package_data=True,
     license="BSD License",
     classifiers=[

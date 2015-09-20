@@ -1,0 +1,11 @@
+enabled:
+    - module1
+    - module2
+
+module_dirs:
+    - resources.engine
+
+module_sets:
+    testmods:
+      - module1
+      - module2
