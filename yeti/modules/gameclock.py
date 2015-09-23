@@ -6,7 +6,7 @@ class GameClock(Module):
     """
 
     _teleop = False
-    _auto = False
+    _autonomous = False
     _disabled = False
 
     def module_init(self):

@@ -1,6 +1,7 @@
 enabled:
   - webui
   - gameclock
+  - pipeline
 
 module_dirs:
   - yeti.modules

@@ -98,3 +98,26 @@ def autorun(func):
         func.tags = []
     func.tags.append("autorun")
     return func
+
+def singleton(func):
+    """
+    A decorator that ensures only one instance of a coroutine is running at any time, and one instance is waiting
+    to run.
+    """
+    func.lock = asyncio.Lock()
+    func.waiting = 0
+
+    @asyncio.coroutine
+    def func_wrapper(self, *args, **kwargs):
+        # Are any other calls waiting already?
+        if func.waiting > 0:
+            return
+
+        func.waiting += 1
+        yield from func.lock.acquire()
+        func.waiting -= 1
+
+        yield from func(self, *args, **kwargs)
+        func.lock.release()
+
+    return func_wrapper

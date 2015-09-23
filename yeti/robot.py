@@ -22,10 +22,24 @@ class YetiRobot(wpilib.IterativeRobot):
         self.engine.spawn_thread()
 
     def teleopInit(self):
-        self.engine.thread_coroutine(self.engine.run_tagged_methods("teleop"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("teleop_init"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_init"))
 
-    def disabledInit(self):
-        self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled"))
+    def teleopPeriodic(self):
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("teleop_periodic"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_periodic"))
 
     def autonomousInit(self):
-        self.engine.thread_coroutine(self.engine.run_tagged_methods("autonomous"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("autonomous_periodic"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_init"))
+
+    def autonomousPeriodic(self):
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("autonomous_periodic"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_periodic"))
+
+    def disabledInit(self):
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled_periodic"))
+
+    def disabledPeriodic(self):
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled_periodic"))
+

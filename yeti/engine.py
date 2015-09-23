@@ -192,7 +192,12 @@ class Engine:
                         else:
                             pymod = importlib.import_module(real_path)
                     except ImportError as e:
-                        if e.msg == "No module named '{}'".format(real_path):
+                        # If the error comes from this import, and not from any successive imports caused by this
+                        # import, ignore it. The error text should be "No module named 'MODPATH'" where modpath can be
+                        # any preceding path to real_path. For example: if real_path is my.package.module, then MODPATH
+                        # could be either "my", "my.package", or "my,package.module". We ignore the error if it is any
+                        # of these.
+                        if "No module named '{}".format(real_path).startswith(e.msg[:-1]):
                             continue
                         raise e
                     else:
@@ -250,7 +255,7 @@ class Engine:
             mod_obj = self.running_modules[mod]
             for method in mod_obj.get_tagged_methods(tag):
                 if asyncio.iscoroutinefunction(method):
-                    mod.start_coroutine(method(*args, **kwargs))
+                    mod_obj.start_coroutine(method(*args, **kwargs))
                 else:
                     method(*args, **kwargs)
 
