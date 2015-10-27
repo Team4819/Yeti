@@ -1,9 +1,11 @@
 import threading
 import importlib
 import inspect
+import pyclbr
 import asyncio
 import logging
 import sys
+import os
 import yaml
 
 _engine_instances = dict()
@@ -34,9 +36,9 @@ class Engine:
         self.running_modules = {}
         self.failed_modules = []
 
-        self.module_dirs = [""]
         self.module_sets = {}
         self.enabled_modules = []
+        self.embedded_modules = []
 
         self.event_loop = asyncio.new_event_loop()
         asyncio.async(self._start(), loop=self.event_loop)
@@ -122,28 +124,31 @@ class Engine:
         # Save config data
         self.module_sets.update(data.get("module_sets", {}))
         self.enabled_modules.extend(data.get("enabled", []))
-        self.module_dirs.extend(data.get("module_dirs", []))
+        self.embedded_modules.extend(data.get("embedded", []))
+        # Add module_dirs to path
+        for module_dir in data.get("module_dirs", []):
+            sys.path.append(os.path.join(os.path.dirname(filename), module_dir))
 
     # -------------------Module Controls---------------------------
 
     @asyncio.coroutine
-    def reload_module(self, module):
+    def reload_module(self, module, retry_failed=False):
         """
         Reload the python module at pymod_path, re-starting any child yeti modules
         """
-        mod_path, mod_object = self._get_module(module)
+        if retry_failed:
+            if module in self.failed_modules:
+                self.failed_modules.remove(module)
+            if module in self.module_sets:
+                for m in self.module_sets[module]:
+                    if m in self.failed_modules:
+                        self.failed_modules.remove(m)
+            mod_path = module
+        else:
+            mod_path, mod_object = self._get_module(module)
 
-        # Stop the running module
-        yield from self.stop_module(mod_path)
-
-        # Re-load the python module
-        for mod_dir in self.module_dirs:
-            if mod_dir != "":
-                real_path = ".".join([mod_dir, mod_path])
-            else:
-                real_path = mod_path
-            if real_path in sys.modules:
-                importlib.reload(sys.modules[real_path])
+            # Stop the running module
+            yield from self.stop_module(mod_path)
 
         # Re-start the module
         yield from self.start_module(mod_path)
@@ -156,70 +161,47 @@ class Engine:
         if mod_id in self.running_modules:
             return
 
+        # Get mod_id
+        mod_set = [mod_id]
         if mod_id in self.module_sets:
             # mod_id is a module set, get the first module that hasn't failed on us
             mod_set = self.module_sets[mod_id]
-            for mod_path in mod_set:
-                if mod_path not in self.failed_modules:
-                    try:
-                        yield from self._start_module(mod_path, mod_class, mod_object)
-                        break
-                    except Exception as e:
-                        self.failed_modules.append(mod_path)
-                        self.logger.exception(e)
-            else:
-                raise RuntimeError("No module paths in module set '{}' that haven't failed.".format(mod_id))
+        for mod_path in mod_set:
+            if mod_path not in self.failed_modules:
+                break
         else:
-            try:
-                yield from self._start_module(mod_id, mod_class, mod_object)
-            except Exception as e:
-                self.failed_modules.append(mod_id)
-                raise e
+            raise RuntimeError("Cannot import {}, all candidates have failed.".format(mod_id))
 
-    @asyncio.coroutine
-    def _start_module(self, mod_path, mod_class=None, mod_object=None):
-        if mod_object is None:
-            if mod_class is None:
-                # Get python module
-                for disc_path in self.module_dirs:
+        try:
+            if mod_object is None:
+                if mod_class is None:
+                    # Find python module
                     try:
-                        if disc_path == "":
-                            real_path = mod_path
-                        else:
-                            real_path = ".".join([disc_path, mod_path])
-                        if real_path in sys.modules:
-                            pymod = sys.modules[real_path]
-                        else:
-                            pymod = importlib.import_module(real_path)
-                    except ImportError as e:
-                        # If the error comes from this import, and not from any successive imports caused by this
-                        # import, ignore it. The error text should be "No module named 'MODPATH'" where modpath can be
-                        # any preceding path to real_path. For example: if real_path is my.package.module, then MODPATH
-                        # could be either "my", "my.package", or "my,package.module". We ignore the error if it is any
-                        # of these.
-                        if "No module named '{}".format(real_path).startswith(e.msg[:-1]):
-                            continue
-                        raise e
+                        scanned_objects = pyclbr.readmodule(mod_path)
+                    except AttributeError as e:
+                        raise ImportError("Failed to find module {}.".format(mod_path))
+                    # Get yeti module class name
+                    for class_name in scanned_objects:
+                        if hasattr(scanned_objects[class_name], "methods") and "module_init" in scanned_objects[class_name].methods:
+                            break
                     else:
-                        break
-                else:
-                    raise ImportError("Failed to find module {} in any discovery paths.".format(mod_path))
-                # Get module class
-                for name, obj in inspect.getmembers(pymod):
-                    if inspect.isclass(obj) and hasattr(obj, "stop"):
-                        mod_class = obj
-                        break
-                else:
-                    raise RuntimeError("No compatible module class found in " + mod_path)
-
-            mod_object = mod_class(self)
-            try:
-                mod_object.start()
-            except Exception as e:
-                yield from mod_object.stop()
-                raise e
-
-        self.running_modules[mod_path] = mod_object
+                        raise ImportError("Failed to find appropriate module type.")
+                    # Load python module
+                    if mod_path in sys.modules:
+                        importlib.reload(sys.modules[mod_path])
+                        pymod = sys.modules[mod_path]
+                    else:
+                        pymod = importlib.import_module(mod_path)
+                    mod_class = getattr(pymod, class_name)
+                # Init object
+                mod_object = mod_class(self)
+            # Start module
+            self.running_modules[mod_path] = mod_object
+            mod_object.start()
+            return
+        except Exception as e:
+            self.logger.exception(e)
+        yield from self.fail_module(mod_id)
 
     @asyncio.coroutine
     def stop_module(self, module):
@@ -229,19 +211,13 @@ class Engine:
             del(self.running_modules[mod_path])
 
     @asyncio.coroutine
-    def fail_module(self, module, replace_mod=True):
+    def fail_module(self, module):
         mod_path, mod_object = self._get_module(module)
         yield from self.stop_module(mod_path)
         self.failed_modules.append(mod_path)
-        if not replace_mod:
-            return
-        for set_id in self.module_sets:
-            mod_set = self.module_sets[set_id]
-            if mod_path in mod_set:
-                index = mod_set.indexOf(mod_path)
-                if index+1 < len(mod_set):
-                    yield from self.start_module(mod_set[index+1])
-                    return
+        for mod_set in self.module_sets:
+            if mod_path in self.module_sets[mod_set]:
+                yield from self.start_module(mod_set)
 
     def get_tagged_methods(self, tag):
         tags = []

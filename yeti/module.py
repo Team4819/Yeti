@@ -23,6 +23,10 @@ class Module:
         self.name = self.__class__.__name__
         self.logger = logging.getLogger('yeti.' + self.name)
 
+        # Get embedded modules
+        for mod_id in self.engine.embedded_modules:
+            setattr(self, mod_id, self.engine.get_module(mod_id))
+
         self.cached_tags = {}
         self.tasks = []
 
@@ -72,7 +76,7 @@ class Module:
             self.cached_tags[tag] = []
             for name, obj in inspect.getmembers(self):
                 if name.startswith(tag) \
-                        or (hasattr(obj, "tags") and tag in obj.tags):
+                        or (callable(obj) and hasattr(obj, "tags") and tag in obj.tags):
                     self.cached_tags[tag].append(obj)
         return self.cached_tags[tag]
 

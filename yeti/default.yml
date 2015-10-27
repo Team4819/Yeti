@@ -1,7 +1,11 @@
 enabled:
-  - webui
+  - webui.webui
   - gameclock
-  - pipeline
+  - triggers
+
+embedded:
+  - gameclock
+  - triggers
 
 module_dirs:
-  - yeti.modules
+  - modules

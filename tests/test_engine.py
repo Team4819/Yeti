@@ -39,5 +39,4 @@ def test_config_load(engine, resources_dir):
     assert mod.name == "ModuleUno"
     assert len(engine.enabled_modules) == 2
     assert len(engine.running_modules) == 1
-    assert "resources.engine" in engine.module_dirs
     assert "testmods" in engine.module_sets
