@@ -2,7 +2,7 @@
 Yeti API
 ========
 
-Yeti is constructed like an onion, each layer adding another set of features to the big picture, and can be easily modified or extended to suit your needs.
+Yeti is designed to be a simplistic alternative to the command-based robot architecture.
 
 The primary components of yeti are layered as follows:
 

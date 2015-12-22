@@ -16,11 +16,11 @@ robot programs, with mechanisms to promote rapid development and in-game failure
           If this is the first you have heard of RobotPy, you can read about it here:
           `About RobotPy <http://robotpy.github.io/about/>`_
 
-.. note:: Yeti heavily utilizes asyncio, which is an asynchronous library that comes default
+.. note:: Yeti uses asyncio, which is an asynchronous library that comes default
           with python. Some knowledge of asyncio would definitely be helpful, but not entirely
           necessary for this guide.
 
-          You can read more about asyncio here: `Asyncio Documentation <https://docs.python.org/3.4/library/asyncio.html>`_
+          You can read more about asyncio here: `Asyncio Documentation <https://docs.python.org/3.5/library/asyncio.html>`_
 
 Installing Yeti
 ---------------
@@ -44,13 +44,10 @@ Or with pip
 Using Yeti
 ----------
 
-Yeti comes with a base robot class :class:`yeti.robots.YetiRobot` you can use to quickly start using yeti. To start,
+Yeti comes with a base robot class :class:`yeti.YetiRobot` you can use to quickly start using yeti. To start,
 add the following code to your robot.py.
 
 .. literalinclude:: ../../examples/basic_example/robot.py
-
-.. note:: Advanced users may be interested in building their own Robot implementation to use yeti.
-          You can read about how yeti works from the perspective of IterativeRobot in Building a Robot Implementation
 
 Building Modules
 ----------------
@@ -62,88 +59,68 @@ Here is a basic example for a drivetrain module. It contains all of the code req
 
 .. literalinclude:: ../../examples/basic_example/modules/arcade_drive.py
 
-.. .. note:: Here is where asyncio comes to play. You will nearly always want to import asyncio when creating
-          Modules, you will see why later on.
-
 The Module Object
 ^^^^^^^^^^^^^^^^^
 The module itself is a class inheriting from the base module type: :class:`yeti.module`.
 
 module_init
 ^^^^^^^^^^^
-This is called upon module startup. Here is where you should initialize all of your wpilib refrences, get
-interfaces squared away, and just get everything woken up.
+This is called upon module startup. Here is where you should initialize all of your wpilib refrences, and perform all
+startup operations.
 
 ::
 
      def module_init(self):
-        #Initialize the Referee for the module.
-        self.referee = Referee(self)
-
         #Setup a joystick
         self.joystick = wpilib.Joystick(0)
-        self.referee.watch(self.joystick)
 
         #Setup the robotdrive
         self.robotdrive = wpilib.RobotDrive(0, 1)
-        self.referee.watch(self.robotdrive)
 
-.. note:: Notice the :class:`Referee` object we initialize here. The referee is a little utility class who's job is to
-          ensure that wpilib objects get cleanly deallocated should your module get unloaded. Make it a habit to have
-          a referee :meth:`Referee.watch()` any wpilib objects you have created.
 
-coroutines
-^^^^^^^^^^
+default functions
+^^^^^^^^^^^^^^^^^
+The simplest way to add functionality to a module is by defining the standard functions that you would normally use in
+IterativeRobot.
+
+The following functions are available
+::
+    enabled_init()
+    enabled_periodic()
+    teleop_init()
+    teleop_periodic()
+    autonomous_init()
+    autonomous_periodic()
+    disabled_init()
+    disabled_periodic()
+
+async functions (coroutines)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. note:: In breif, asyncio coroutines are fake threads. They have their own train of execution, deferring control
-          whenever they "yeild from" something. To initialize a coroutine, use the "@asyncio.coroutine" decorator,
+          whenever they "await" something. To define a coroutine, use "async def my_function(self, etc)"
           as seen below. For more information, read the "Asyncio Documentation"
 
-Here is the run loop used in the above module example:
+This cannon example module demonstrates using async functions in yeti.
 
-::
+.. note:: Rather than using python's native time.sleep() or wpilib's Timer.delay() within coroutines, always
+          use `await asyncio.sleep()`, which allows other coroutines to execute.
 
-    @gamemode.teleop_task
-    @asyncio.coroutine
-    def drive_loop(self):
+.. literalinclude:: ../../examples/basic_example/modules/cannon.py
 
-        #Loop until end of teleop mode.
-        while gamemode.is_teleop():
+triggers
+^^^^^^^^
 
-            #Get the joystick values and drive the motors.
-            self.robotdrive.arcadeDrive(-self.joystick.getY(), -self.joystick.getX())
-
-            #Pause for a moment to let the rest of the code run.
-            yield from asyncio.sleep(.05)
-
-The :meth:`gamemode.teleop_task` decorator causes the coroutine to be automatically run whenever
-the robot is in teleoperated mode. When that happens, we use a while loop to continually iterate
-while the robot remains in teleoperated mode. For each iteration we use the joystick inputs to set
-the RobotDrive values. Before we loop back, we sleep for .05 of a second to let the rest of the robot
-program run.
-
-.. note:: "yield from" is used to transition from one coroutine's execution to another.
-          "gamemode.wait_for_teleop()" Is a coroutine, supplied by the gamemode interface,
-          which will pause execution in this "fake thread" until the robot is put into
-          teleoperated mode. When this finishes, execution will return to our coroutine.
-
-.. note:: Rather than using python's native time.sleep(), or wpilib's Timer.delay(), always
-          use asyncio.sleep(), which allows other coroutines to execute.
-
-Aside from using the decorators provided in :mod:`gamemode`, there are a few other ways to run module coroutines:
-
-* By calling "yield from my_coroutine()" from another coroutine. Note that this is a synchronous process.
-* Using the "self.start_coroutine(my_coroutine())" method. This schedules the coroutine, and returns immediately.
-* Using the "yeti.autorun_coroutine()" decorator. This will cause the coroutine to run on module init.
+In this example, :object:`self.triggers` links to the "triggers" default module, and is available to all modules by
+default. The triggers module contains utilities such as :meth:`on_rising_edge()` to make working with coroutines easier.
 
 Module Communication
 ^^^^^^^^^^^^^^^^^^^^
-
-All inter-module communication is handled by the :mod:`yeti.interfaces` library. You can read about it in the yeti API documentation.
+You can obtain any running module object by calling `self.engine.get_module("my_module")`.
 
 Error Recovery
 ^^^^^^^^^^^^^^
-One of the key features of yeti's modular system is how it handles module failure. When using instances of
-ModuleLoader (Default in YetiRobot) you can specify what are called "module fallbacks". If any uncaught
+One of the key features of yeti's modular system is how it handles module failure. In the yeti config file, you can
+define "module sets". Aside from acting as
 exception is thrown from within a module, the offending module is immediately unloaded.
 
 However, if that module is referenced in a fallback list, the next entry on the list is immediately loaded in it's
@@ -154,40 +131,22 @@ your robot to cleanly recover from what would have been match-stopping errors.
 Config File
 -----------
 
-The default YetiRobot uses the ConfigManager utility to define modules to run at start-up, as well
-as fallback lists for modules.
+Yeti uses a yaml config file, "yeti.yml", located alongside your robot.py to specify what modules to load at startup
+and to define "module sets"
 
-Syntax
-^^^^^^
+Here is the yeti.yml for the arcade drive and cannon modules shown above:
 
-Sections are defined by square brackets, as seen in the example. Other than the StartupMods section,
-each section defines a fallback list. For example, see the drivetrain section in the example config
-file shown below. It specifies two modules for the fallback list, the one found in modules/awesome_drive.py,
-and the one found in modules/basic_drive.py. With this setup, whenever you want to load a drivetrain module,
-you can now tell yeti to load "drivetrain" and it will grab the first entry on this list.
+.. literalinclude:: ../../examples/basic_example/yeti.yml
 
-The StartupMods section is special. Rather than defining a fallback list, it lists modules to load upon program
-startup.
+Module sets
+^^^^^^^^^^^
+In yeti.yml, you can join multiple, interchangeable modules into a "module set". The benefit of this is that, if any
+module in a set were to fail, another may be loaded to replace it. For example -- you could have three available drivetrain
+modules: advanced_can_mecanum, basic_can_mecanum, and arcade_drive. Each of these modules would be capable of running
+the drivetrain of your robot, but could each have different features. When yeti starts the "drivetrain" module set, it
+will attempt load the first module on the list, advanced_can_mecanum. If this module raises an exception, yeti will
+automatically load the next module on the list, basic_can_mecanum.
 
-::
-
-    [StartupMods]
-    drivetrain
-    elevator
-    modules.autonomous
-
-    [drivetrain]
-    modules.awesome_drive
-    modules.basic_drive
-
-    [elevator]
-    modules.simple_elevator
-    modules.pid_elevator
-
-
-    #This is a comment
-
-YetiRobot expects this file to be found at "mods.conf" in the same directory as robotpy.
 
 Deploying Code
 --------------

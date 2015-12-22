@@ -15,7 +15,6 @@ Contents:
    :maxdepth: 1
 
    using_yeti/index
-   yeti_api
 
 Indices and tables
 ==================

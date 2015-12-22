@@ -30,7 +30,7 @@ class YetiRobot(wpilib.IterativeRobot):
         self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_periodic"))
 
     def autonomousInit(self):
-        self.engine.thread_coroutine(self.engine.run_tagged_methods("autonomous_periodic"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("autonomous_init"))
         self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_init"))
 
     def autonomousPeriodic(self):
@@ -38,7 +38,7 @@ class YetiRobot(wpilib.IterativeRobot):
         self.engine.thread_coroutine(self.engine.run_tagged_methods("enabled_periodic"))
 
     def disabledInit(self):
-        self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled_periodic"))
+        self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled_init"))
 
     def disabledPeriodic(self):
         self.engine.thread_coroutine(self.engine.run_tagged_methods("disabled_periodic"))

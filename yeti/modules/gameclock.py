@@ -1,4 +1,5 @@
 from yeti import Module
+import asyncio
 
 class GameClock(Module):
     """

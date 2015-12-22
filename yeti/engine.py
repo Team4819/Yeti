@@ -55,10 +55,9 @@ class Engine:
             logger = self.logger
         self.event_loop.call_soon_threadsafe(asyncio.async, self._error_net(coroutine, logger))
 
-    @asyncio.coroutine
-    def _error_net(self, coro, log):
+    async def _error_net(self, coro, log):
         try:
-            yield from coro
+            await coro
         except Exception as e:
             self.logger.exception(e)
 
@@ -88,11 +87,10 @@ class Engine:
         asyncio.set_event_loop(self.event_loop)
         self.event_loop.run_until_complete(asyncio.sleep(time))
 
-    @asyncio.coroutine
-    def _start(self):
+    async def _start(self):
         for mod_id in self.enabled_modules:
             try:
-                yield from self.start_module(mod_id)
+                await self.start_module(mod_id)
             except Exception as e:
                 self.logger.exception(e)
 
@@ -103,14 +101,13 @@ class Engine:
         """
         self.thread_coroutine(self._stop_coroutine)
 
-    @asyncio.coroutine
-    def _stop_coroutine(self):
+    async def _stop_coroutine(self):
         """
         Unloads all modules and stops the event loop.
         This method is a coroutine.
         """
         for modname in self.loaded_modules:
-            yield from self.stop_module(modname)
+            await self.stop_module(modname)
         self.event_loop.stop()
 
     # -------------------Config reading---------------------------
@@ -131,10 +128,12 @@ class Engine:
 
     # -------------------Module Controls---------------------------
 
-    @asyncio.coroutine
-    def reload_module(self, module, retry_failed=False):
+    async def reload_module(self, module, retry_failed=False):
         """
-        Reload the python module at pymod_path, re-starting any child yeti modules
+        Reload the given yeti module
+
+        :param module: The module to restart (either a module object, module path, or module set id)
+        :param retry_failed: If true, then clear any failures before reloading.
         """
         if retry_failed:
             if module in self.failed_modules:
@@ -145,16 +144,15 @@ class Engine:
                         self.failed_modules.remove(m)
             mod_path = module
         else:
-            mod_path, mod_object = self._get_module(module)
+            mod_path, _ = self._get_module(module)
 
             # Stop the running module
-            yield from self.stop_module(mod_path)
+            await self.stop_module(mod_path)
 
         # Re-start the module
-        yield from self.start_module(mod_path)
+        await self.start_module(mod_path)
 
-    @asyncio.coroutine
-    def start_module(self, mod_id, mod_class=None, mod_object=None):
+    async def start_module(self, mod_id, mod_class=None, mod_object=None):
         """
         Creates a module object and adds it to running_modules
         """
@@ -201,23 +199,21 @@ class Engine:
             return
         except Exception as e:
             self.logger.exception(e)
-        yield from self.fail_module(mod_id)
+        await self.fail_module(mod_id)
 
-    @asyncio.coroutine
-    def stop_module(self, module):
+    async def stop_module(self, module):
         mod_path, mod_object = self._get_module(module)
-        yield from mod_object.stop()
+        await mod_object.stop()
         if mod_path in self.running_modules:
             del(self.running_modules[mod_path])
 
-    @asyncio.coroutine
-    def fail_module(self, module):
+    async def fail_module(self, module):
         mod_path, mod_object = self._get_module(module)
-        yield from self.stop_module(mod_path)
+        await self.stop_module(mod_path)
         self.failed_modules.append(mod_path)
         for mod_set in self.module_sets:
             if mod_path in self.module_sets[mod_set]:
-                yield from self.start_module(mod_set)
+                await self.start_module(mod_set)
 
     def get_tagged_methods(self, tag):
         tags = []
@@ -225,8 +221,7 @@ class Engine:
             tags.extend(self.running_modules[mod].get_tagged_methods(tag))
         return tags
 
-    @asyncio.coroutine
-    def run_tagged_methods(self, tag, *args, **kwargs):
+    async def run_tagged_methods(self, tag, *args, **kwargs):
         for mod in self.running_modules:
             mod_obj = self.running_modules[mod]
             for method in mod_obj.get_tagged_methods(tag):

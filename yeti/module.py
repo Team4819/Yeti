@@ -47,8 +47,7 @@ class Module:
         """Used for freeing any used resources."""
         pass
 
-    @asyncio.coroutine
-    def stop(self):
+    async def stop(self):
         """
         This is used to stop module operation. It cancels all running tasks and calls `module_deinit`
         """
@@ -105,23 +104,15 @@ def autorun(func):
 
 def singleton(func):
     """
-    A decorator that ensures only one instance of a coroutine is running at any time, and one instance is waiting
-    to run.
+    A decorator that ensures only one instance of a coroutine is running at any time.
     """
     func.lock = asyncio.Lock()
-    func.waiting = 0
 
-    @asyncio.coroutine
-    def func_wrapper(self, *args, **kwargs):
-        # Are any other calls waiting already?
-        if func.waiting > 0:
+    async def func_wrapper(self, *args, **kwargs):
+        if func.lock.locked():
             return
 
-        func.waiting += 1
-        yield from func.lock.acquire()
-        func.waiting -= 1
-
-        yield from func(self, *args, **kwargs)
-        func.lock.release()
+        async with func.lock:
+            await func(self, *args, **kwargs)
 
     return func_wrapper
