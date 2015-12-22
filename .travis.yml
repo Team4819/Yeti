@@ -5,7 +5,7 @@ install:
   - "pip install python-coveralls"
 
 python:
-  - "3.4"
+  - "3.5"
 
 script:
   - tests/run_tests.sh
