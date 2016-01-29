@@ -8,7 +8,7 @@ enabled:
 module_dirs:
     - modules
 
-# Defines  module sets.
+# Defines module sets.
 module_sets:
     drivetrain:
       - arcade_drive

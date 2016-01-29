@@ -41,7 +41,7 @@ class Engine:
         self.embedded_modules = []
 
         self.event_loop = asyncio.new_event_loop()
-        asyncio.async(self._start(), loop=self.event_loop)
+        asyncio.run_coroutine_threadsafe(self._start(), self.event_loop)
         self.logger = logging.getLogger(name="yeti." + self.__class__.__name__)
 
     def thread_coroutine(self, coroutine, logger=None):
@@ -53,7 +53,7 @@ class Engine:
         """
         if logger is None:
             logger = self.logger
-        self.event_loop.call_soon_threadsafe(asyncio.async, self._error_net(coroutine, logger))
+        asyncio.run_coroutine_threadsafe(self._error_net(coroutine, logger), self.event_loop)
 
     async def _error_net(self, coro, log):
         try:
@@ -99,7 +99,7 @@ class Engine:
         Schedules :meth:`._stop_coroutine` to be run in the engine's event loop.
         This method is thread-safe.
         """
-        self.thread_coroutine(self._stop_coroutine)
+        self.thread_coroutine(self._stop_coroutine())
 
     async def _stop_coroutine(self):
         """
