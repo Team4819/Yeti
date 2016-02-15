@@ -7,6 +7,7 @@ import logging
 import sys
 import os
 import yaml
+from robotpy_ext.misc import asyncio_policy
 
 _engine_instances = dict()
 
@@ -40,7 +41,8 @@ class Engine:
         self.enabled_modules = []
         self.embedded_modules = []
 
-        self.event_loop = asyncio.new_event_loop()
+        self.event_loop = asyncio_policy.FPGATimedEventLoop()
+        asyncio.set_event_loop(self.event_loop)
         asyncio.run_coroutine_threadsafe(self._start(), self.event_loop)
         self.logger = logging.getLogger(name="yeti." + self.__class__.__name__)
 
