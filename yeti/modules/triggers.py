@@ -48,7 +48,10 @@ class Triggers(Module):
             if callback is None:
                 break
             else:
-                await callback()
+                if asyncio.iscoroutine(callback):
+                    await callback()
+                else:
+                    callback()
 
             if not repeat:
                 break
