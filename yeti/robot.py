@@ -1,6 +1,7 @@
 import wpilib
 from os.path import join, abspath, dirname
 from yeti import Engine
+from robotpy_ext.misc import asyncio_policy
 
 
 class YetiRobot(wpilib.IterativeRobot):
@@ -12,7 +13,7 @@ class YetiRobot(wpilib.IterativeRobot):
     config_file = "yeti.yml"
 
     def robotInit(self):
-        self.engine = Engine()
+        self.engine = Engine(asyncio_policy.FPGATimedEventLoop)
         self.engine.load_config(join(abspath(dirname(__file__)), "default.yml"))
         self.engine.load_config(join(self.config_dir, self.config_file))
         self.engine.spawn_thread()
