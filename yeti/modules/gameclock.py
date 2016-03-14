@@ -1,5 +1,5 @@
 from yeti import Module
-import asyncio
+
 
 class GameClock(Module):
     """
@@ -13,29 +13,29 @@ class GameClock(Module):
     def module_init(self):
         pass
 
-    def teleop(self):
+    def teleop_init(self):
         self._teleop = True
         self._autonomous = False
         self._disabled = False
 
-    def autonomous(self):
+    def autonomous_init(self):
         self._teleop = False
         self._autonomous = True
         self._disabled = False
 
-    def disabled(self):
+    def disabled_init(self):
         self._teleop = False
         self._autonomous = False
         self._disabled = True
 
     def is_teleop(self):
-        return self.teleop
+        return self._teleop
 
     def is_autonomous(self):
-        return self.autonomous
+        return self._autonomous
 
     def is_enabled(self):
-        return not self.disabled
+        return not self._disabled
 
     def is_disabled(self):
-        return self.disabled
+        return self._disabled
