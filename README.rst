@@ -1,8 +1,3 @@
-.. image:: https://travis-ci.org/Team4819/Yeti.svg?branch=master
-    :target: https://travis-ci.org/Team4819/Yeti
-.. image:: https://coveralls.io/repos/Team4819/Yeti/badge.png?branch=master
-  :target: https://coveralls.io/r/Team4819/Yeti?branch=master
-
 Yeti
 ====
 
@@ -28,5 +23,5 @@ See LICENSE.txt
 Authors
 =======
 
-Christian Balcom (robot.inventor@gmail.com, FRC Team 4819)
+Christian Balcom (robot.inventor@gmail.com)
 

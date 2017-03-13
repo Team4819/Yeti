@@ -1,0 +1,35 @@
+monitors:
+    main_mon:
+        addr: 127.0.0.1
+        udp_port: 9000
+        tcp_port: 9001
+    slave_mon:
+        addr: 127.0.0.1
+        udp_port: 9010
+        tcp_port: 9011
+
+modules:
+    echo1:
+        cmd: "python echo_module.py"
+        update_frequency: 10
+        mon: main_mon
+
+    echo2:
+        cmd: "python echo_module.py"
+        update_frequency: 10
+        mon: slave_mon
+        target: echo1
+
+    echo3:
+        cmd: "python echo_module.py"
+        update_frequency: 10
+        mon: main_mon
+        target: echo2
+
+    echo4:
+        cmd: "python echo_module.py"
+        update_frequency: 10
+        mon: slave_mon
+        target: echo3
+
+

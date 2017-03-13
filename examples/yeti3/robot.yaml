@@ -1,0 +1,54 @@
+monitors:
+    surface:
+        addr: 192.168.1.10
+        udp_port: 9000
+        tcp_port: 9001
+    odroid:
+        addr: 192.168.1.10
+        ssh_user: alarm
+        ssh_pass: alarm
+        udp_port: 9002
+        tcp_port: 9003
+
+nodes:
+    surface:
+        mon: surface
+        addr: 192.168.1.10
+        udp_port: 9004
+        tcp_port: 9005
+    odroid:
+        mon: odroid
+        addr: 192.168.1.10
+        udp_port: 9006
+        tcp_port: 9007
+
+modules:
+    default:
+        update_rate: 20
+        node: odroid
+
+    joystick:
+        start_cmd: "java -jar joystick.jar"
+        node: surface
+
+    teleop:
+        python_module: teleop
+
+    left_rear_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 1
+    right_rear_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 2
+    left_fore_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 3
+    right_fore_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 4
+    left_vert_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 5
+    right_vert_thruster:
+        python_iterative_module: "polollu_controller.py"
+        bus_addr: 6

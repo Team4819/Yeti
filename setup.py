@@ -47,10 +47,10 @@ setup(
     long_description=long_description,
     author='Christian Balcom',
     author_email='robot.inventor@gmail.com',
-    url='https://github.com/Team4819/yeti',
-    keywords='frc first robotics asyncio',
+    url='https://github.com/computer_whisperer/yeti',
+    keywords='frc first robotics',
     packages=find_packages(),
-    install_requires=["aiohttp", "pyyaml"],
+    install_requires=["pyyaml"],
     include_package_data=True,
     license="BSD License",
     classifiers=[
