@@ -13,14 +13,9 @@ monitors:
 nodes:
     surface:
         mon: surface
-        addr: 192.168.1.10
-        udp_port: 9004
-        tcp_port: 9005
     odroid:
         mon: odroid
-        addr: 192.168.1.10
-        udp_port: 9006
-        tcp_port: 9007
+
 
 modules:
     default:

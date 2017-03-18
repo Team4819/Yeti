@@ -7,8 +7,15 @@ class OutdatedStateException(Exception):
         self.key = key
 
 
-class NoSuchModuleException(Exception):
+class UnreachableModuleException(Exception):
 
     def __init__(self, module_id):
         super().__init__("{}".format(module_id))
         self.module_id = module_id
+
+
+class UnreachableMonitorException(Exception):
+
+    def __init__(self, monitor_id):
+        super().__init__("{}".format(monitor_id))
+        self.monitor_id = monitor_id

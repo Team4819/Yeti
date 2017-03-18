@@ -11,8 +11,8 @@ mon.start_modules()
 
 time.sleep(1)
 
-mon2 = yeti.Monitor("slave_mon", conf_path)
-mon2.start()
-mon2.start_modules()
+# mon2 = yeti.Monitor("slave_mon", conf_path)
+# mon2.start()
+# mon2.start_modules()
 
 time.sleep(1000)
