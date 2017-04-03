@@ -3,8 +3,8 @@ import yaml
 import time
 import subprocess
 
-from messenger import *
-from runtime_exceptions import *
+from .messenger import *
+from .runtime_exceptions import *
 
 
 class Monitor:

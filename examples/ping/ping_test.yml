@@ -1,0 +1,24 @@
+monitors:
+    main_mon:
+        addr: 192.168.1.2
+        udp_port: 9000
+        tcp_port: 9001
+    slave_mon:
+        addr: 192.168.1.10
+        udp_port: 9010
+        tcp_port: 9011
+
+modules:
+    ping1:
+        cmd: "python ping_module.py"
+        update_frequency: 100
+        mon: main_mon
+
+    ping2:
+        cmd: "python ping_module.py"
+        update_frequency: 100
+        mon: slave_mon
+        target: ping1
+
+
+

@@ -1,4 +1,4 @@
-from yeti import Module
+from py.yeti import Module
 
 
 class GameClock(Module):

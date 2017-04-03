@@ -1,8 +1,8 @@
 import yaml
 import time
 
-from messenger import *
-from runtime_exceptions import *
+from .messenger import *
+from .runtime_exceptions import *
 
 
 class Node:
@@ -43,7 +43,6 @@ class Node:
                     self.monitor_conf[mon_id]["tcp_port"])
 
     def bootstrap_node(self, mon_id):
-
         response = self.messenger.send_message(
             "node_bootstrap_request",
             {"node_id": self.node_id}, "mon_"+mon_id, True)

@@ -1,4 +1,4 @@
-import yeti
+from py import yeti
 import time
 import asyncio
 import os
@@ -8,7 +8,7 @@ import logging
 from aiohttp import web
 
 try:
-    from yeti.version import __version__
+    from py.yeti import __version__
 except:
     __version__ = "master"
 

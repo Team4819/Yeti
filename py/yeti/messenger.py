@@ -66,12 +66,32 @@ class Messenger:
                     conn, addr = self.tcp_sock.accept()
                     conn.setblocking(True)
                     conn.settimeout(0.005)
-                    str_dat = conn.recv(1024)
 
-                    message = self._parse_message(str_dat.decode("utf-8"))
+                    buf = ""
+                    while True:
+                        c = conn.recv(1).decode("utf-8")
+                        if c == "|":
+                            continue
+                        if c == "!":
+                            packet_len = int(buf)
+                            break
+                        buf += c
+
+                    buf = b''
+                    while True:
+                        buf += conn.recv(packet_len - len(buf))
+                        if len(buf) == packet_len:
+                            break
+                    message = self._parse_message(buf.decode("utf-8"))
                     ret = message["handler"](message["data"])
+
+                    if ret is None:
+                        conn.send("|0!".encode('utf-8'))
                     if ret is not None:
-                        conn.send(json.dumps(ret).encode("utf-8"))
+                        assert isinstance(ret, dict)
+                        payload = json.dumps(ret).encode("utf-8")
+                        conn.send("|{}!".format(len(payload)).encode("utf-8"))
+                        conn.send(payload)
                 finally:
                     conn.close()
         print("tcp loop terminated")
@@ -80,16 +100,17 @@ class Messenger:
 
     def _udp_receive_loop(self):
         self.udp_sock.bind(("0.0.0.0", self.udp_port))
-        self.udp_sock.setblocking(False)
+        self.udp_sock.setblocking(True)
         selector = selectors.DefaultSelector()
         selector.register(self.udp_sock, selectors.EVENT_READ)
+
         while self.running:
             self._check_alive()
             events = selector.select(1)
             for _, _ in events:
                 try:
-                    str_dat = self.udp_sock.recv(1024)
-                    message = self._parse_message(str_dat.decode("utf-8"))
+                    buf = self.udp_sock.recv(1024)
+                    message = self._parse_message(buf.decode("utf-8"))
                     message["handler"](message["data"])
                 except Exception as e:
                     print(traceback.format_exc())
@@ -125,22 +146,40 @@ class Messenger:
             "msg_type": message_type,
             "data": data,
         }
-        data = json.dumps(message_dict)
+        payload = json.dumps(message_dict).encode("utf-8")
+
         if blocking:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setblocking(True)
             sock.settimeout(3.0)
             sock.connect((address, tcp_port))
-            sock.send(data.encode("utf-8"))
-            ret_data = sock.recv(1024)
+            sock.send("|{}!".format(len(payload)).encode("utf-8"))
+            sock.send(payload)
+
+            buf = ""
+            while True:
+                c = sock.recv(1).decode("utf-8")
+                if c == "|":
+                    continue
+                if c == "!":
+                    packet_len = int(buf)
+                    break
+                buf += c
+
+            buf = b''
+            while True:
+                buf += sock.recv(packet_len - len(buf))
+                if len(buf) == packet_len:
+                    break
+            s = buf.decode("utf-8")
+
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
-            s = ret_data.decode("utf-8")
             if s == "":
                 return None
             return json.loads(s)
         else:
-            self.udp_sock.sendto(data.encode("utf-8"), (address, udp_port))
+            self.udp_sock.sendto(payload, (address, udp_port))
 
     def _on_address_resolution_request(self, data):
         response = {"request_blacklist": data["request_blacklist"]}
@@ -158,7 +197,7 @@ class Messenger:
         First tries to use cache, then scans all other registered messengers.
         """
         if messenger_id not in self.address_book:
-            # Setup a request blacklist so we don't recurse over the network.
+            # Setup a request blacklist so we don't infinitely recurse over the network.
             if request_blacklist is None:
                 request_blacklist = []
             for client_id in self.address_book:
@@ -189,4 +228,4 @@ class CouldNotResolveMessengerException(Exception):
 
     def __init__(self, messenger_id):
         super().__init__("{}".format(messenger_id))
-        self.monitor_id = messenger_id
+        self.messenger_id = messenger_id

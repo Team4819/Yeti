@@ -1,5 +1,6 @@
-import yeti
 import sys
+
+from py import yeti
 
 
 class TeleopModule(yeti.IterativeModule):

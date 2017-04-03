@@ -37,7 +37,7 @@ if exists(version_file):
 else:
     __version__ = "master"
 
-with open(join(setup_dir, 'README.rst'), 'r') as readme_file:
+with open(join(setup_dir, '../README.rst'), 'r') as readme_file:
     long_description = readme_file.read()
 
 setup(
@@ -48,7 +48,7 @@ setup(
     author='Christian Balcom',
     author_email='robot.inventor@gmail.com',
     url='https://github.com/computer_whisperer/yeti',
-    keywords='frc first robotics',
+    keywords='robotics',
     packages=find_packages(),
     install_requires=["pyyaml"],
     include_package_data=True,
