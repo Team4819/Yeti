@@ -16,6 +16,7 @@ class Messenger:
     def __init__(self, messenger_id):
         self.message_types = {}
         self.address_book = {}
+        self.address_book_lock = threading.RLock()
 
         self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -131,11 +132,12 @@ class Messenger:
         return data
 
     def register_messenger_address(self, messenger_id, address=None, udp_port=None, tcp_port=None):
-        if address is None:
-            address = self.address
-            udp_port = self.udp_port
-            tcp_port = self.tcp_port
-        self.address_book[messenger_id] = (address, udp_port, tcp_port)
+        with self.address_book_lock:
+            if address is None:
+                address = self.address
+                udp_port = self.udp_port
+                tcp_port = self.tcp_port
+            self.address_book[messenger_id] = (address, udp_port, tcp_port)
 
     def register_message_type(self, message_type, callback):
         self.message_types[message_type] = callback
@@ -196,32 +198,33 @@ class Messenger:
         Resolves the address and port number of a messenger.
         First tries to use cache, then scans all other registered messengers.
         """
-        if messenger_id not in self.address_book:
-            # Setup a request blacklist so we don't infinitely recurse over the network.
-            if request_blacklist is None:
-                request_blacklist = []
-            for client_id in self.address_book:
-                if (self.address, self.udp_port, self.tcp_port) == self.address_book[client_id]:
-                    request_blacklist.append(client_id)
-            for client_id in self.address_book:
-                if client_id in request_blacklist:
-                    continue
-                try:
-                    response = self.send_message("address_resolution_request",
-                                                 {"messenger_id": messenger_id,
-                                                  "request_blacklist": request_blacklist},
-                                                 client_id, blocking=True)
-                    if "addr" in response:
-                        break
-                    else:
-                        request_blacklist.clear()
-                        request_blacklist.extend(response["request_blacklist"])
-                except (ConnectionError, socket.timeout) as e:
-                    request_blacklist.append(client_id)
-            else:
-                raise CouldNotResolveMessengerException(messenger_id)
-            self.address_book[messenger_id] = response["addr"], response["udp_port"], response["tcp_port"]
-        return self.address_book[messenger_id]
+        with self.address_book_lock:
+            if messenger_id not in self.address_book:
+                # Setup a request blacklist so we don't infinitely recurse over the network.
+                if request_blacklist is None:
+                    request_blacklist = []
+                for client_id in self.address_book:
+                    if (self.address, self.udp_port, self.tcp_port) == self.address_book[client_id]:
+                        request_blacklist.append(client_id)
+                for client_id in self.address_book:
+                    if client_id in request_blacklist:
+                        continue
+                    try:
+                        response = self.send_message("address_resolution_request",
+                                                     {"messenger_id": messenger_id,
+                                                      "request_blacklist": request_blacklist},
+                                                     client_id, blocking=True)
+                        if "addr" in response:
+                            break
+                        else:
+                            request_blacklist.clear()
+                            request_blacklist.extend(response["request_blacklist"])
+                    except (ConnectionError, socket.timeout) as e:
+                        request_blacklist.append(client_id)
+                else:
+                    raise CouldNotResolveMessengerException(messenger_id)
+                self.address_book[messenger_id] = response["addr"], response["udp_port"], response["tcp_port"]
+            return self.address_book[messenger_id]
 
 
 class CouldNotResolveMessengerException(Exception):

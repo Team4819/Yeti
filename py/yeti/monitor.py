@@ -87,10 +87,13 @@ class Monitor:
                 if self.module_conf[blame_module_id]["mon"] == self.monitor_id:
                     response = self._on_module_data_request({"module_id": blame_module_id})
                 else:
-                    response = self.messenger.send_message(
-                        "module_data_request",
-                        {"module_id": blame_module_id},
-                        "mon_" + self.module_conf[blame_module_id]["mon"], blocking=True)
+                    try:
+                        response = self.messenger.send_message(
+                            "module_data_request",
+                            {"module_id": blame_module_id},
+                            "mon_" + self.module_conf[blame_module_id]["mon"], blocking=True)
+                    except ConnectionRefusedError:
+                        response = None
 
                 if response is not None and response["running_state"] == "running":
                     self.messenger.send_message("module_restart_condition", {"module_id": module_id}, "module_" + module_id, blocking=False)
@@ -98,15 +101,18 @@ class Monitor:
             if message["exception_cause"].startswith("outdated_state: "):
                 blame_module_id, blame_key = message["exception_cause"][16:].split(".")
 
-                response = self.messenger.send_message(
-                    "get_state",
-                    {
-                        "module_id": blame_module_id,
-                        "key": blame_key,
-                        "age_limit": 1,
-                    }, "module_" + blame_module_id, True)
+                try:
+                    response = self.messenger.send_message(
+                        "get_state",
+                        {
+                            "module_id": blame_module_id,
+                            "key": blame_key,
+                            "age_limit": 1,
+                        }, "module_" + blame_module_id, True)
+                except ConnectionRefusedError:
+                    return None
 
-                if not response["too_old"]:
+                if response is not None and not response["too_old"]:
                     self.messenger.send_message("module_restart_condition", {"module_id": module_id}, "module_" + module_id, blocking=False)
 
     def _on_node_bootstrap_request(self, message):

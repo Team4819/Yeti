@@ -29,23 +29,29 @@ class IterativeModule:
 
     def _main_loop(self):
         last_beat = 0
+        last_update = 0
         last_running_state = "stopped"
-        while self.thread_running:
+        while True:
+            if not self.thread_running:
+                self.stop()
+                return
             if time.time() - last_beat > 1:
                 self.node.send_heartbeat(self.module_id)
                 last_beat = time.time()
-            curr_running_state = self.node.get_running_state(self.module_id)
-            try:
-                if last_running_state != "running" and curr_running_state == "running":
-                    self.start()
-                if curr_running_state == "running":
-                    self.update()
-                if last_running_state == "running" and curr_running_state != "running":
-                    self.stop()
-            except Exception as e:
-                self.node.report_module_exception(self.module_id, e)
-            last_running_state = curr_running_state
-            time.sleep(1/self.module_config["update_frequency"])
+            if time.time() - last_update > 1/self.module_config["update_frequency"]:
+                last_update = time.time()
+                curr_running_state = self.node.get_running_state(self.module_id)
+                try:
+                    if last_running_state != "running" and curr_running_state == "running":
+                        self.start()
+                    if curr_running_state == "running":
+                        self.update()
+                    if last_running_state == "running" and curr_running_state != "running":
+                        self.stop()
+                except Exception as e:
+                    self.node.report_module_exception(self.module_id, e)
+                last_running_state = curr_running_state
+            time.sleep(0.005)
             self._check_alive()
 
     def get_state(self, key, module_id=None, age_limit=0):
